@@ -1,4 +1,4 @@
-﻿# dsh-tidewatch
+# dsh-tidewatch
 
 **DeepSeek peak/off-peak tide badge**: a floating badge beside the composer that tells you whether it's peak or off-peak right now, how long until the next phase, and how much this session costs.
 
@@ -47,6 +47,7 @@ Restart `dsh web` after installing.
 
 - The badge floats to the right of the composer, vertically centered with it; on narrow windows it moves above the composer instead, never covering the input area or the built-in stats line
 - Click the badge to expand/collapse the detail panel: windows, current tier prices, token breakdown, currency switch (¥ / $)
+- Click the "Session cost" row to expand the **per-model cost breakdown** (each model's tokens and cost listed separately; the total equals the sum of per-model costs)
 - Currency choice applies immediately and persists; CNY shows 2 decimals, USD 4 decimals
 
 ## Layout
