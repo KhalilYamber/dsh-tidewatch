@@ -1,0 +1,58 @@
+{
+  "name": "dsh-tidewatch",
+  "version": "1.0.0",
+  "description": "DeepSeek 峰谷时刻悬浮卡片：官方峰谷时段、当前档位、距下一阶段倒计时与本次会话 API 花费（人民币）。A floating tide card for DeepSeek Harness: official peak/off-peak windows, live phase countdown and this session's API cost in CNY.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "dshhub": {
+    "schemaVersion": 1,
+    "displayName": "dsh-tidewatch",
+    "summary": "DeepSeek 峰谷时刻悬浮卡片：官方峰谷时段（UTC 01:00–04:00 / 06:00–10:00 = 北京 09:00–12:00 / 14:00–18:00）、当前档位状态点、距下一阶段倒计时、本次会话 Token 明细与人民币费用（汇率可配）。",
+    "categories": ["费用", "Web UI", "观测"],
+    "surfaces": ["host", "web"],
+    "capabilities": {
+      "provides": ["projection:costUsage"]
+    },
+    "compatibility": {
+      "dsh": ">=0.1.0-rc.5",
+      "node": ">=20"
+    }
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml"
+  ],
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "client-plugin",
+    "peak",
+    "off-peak",
+    "tide",
+    "cost",
+    "usage"
+  ],
+  "license": "MIT"
+}
