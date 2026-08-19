@@ -54,5 +54,13 @@
     "cost",
     "usage"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KhalilYamber/dsh-tidewatch.git"
+  },
+  "homepage": "https://github.com/KhalilYamber/dsh-tidewatch#readme",
+  "bugs": {
+    "url": "https://github.com/KhalilYamber/dsh-tidewatch/issues"
+  },
   "license": "MIT"
 }
