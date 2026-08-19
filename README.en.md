@@ -1,4 +1,4 @@
-# dsh-tidewatch
+﻿# dsh-tidewatch
 
 **DeepSeek peak/off-peak tide badge**: a floating badge beside the composer that tells you whether it's peak or off-peak right now, how long until the next phase, and how much this session costs.
 
@@ -6,7 +6,7 @@
 - Collapsed: `● 峰期 距谷期 03:33 · ¥0.12` (peak, 03:33 to off-peak, ¥0.12)
 - Expanded (click to open): official peak windows (Beijing time), current tier prices, this session's token breakdown, exchange-rate setting
 - Billing: official peak/off-peak tier prices, billed by the **actual timestamp of each call**, cache hit/miss charged separately
-- Currency: USD ledger → CNY display, configurable rate (default 7.2, persisted in localStorage)
+- Currency: CNY display by default (fixed rate 6.82, matching the official CNY prices); one-click switch to USD (4 decimals) in the expanded panel
 - Follows the GUI light/dark theme (`--dsw-*` tokens)
 
 ## Peak windows (official basis)
@@ -27,7 +27,7 @@ Off-peak prices are half of peak prices. The badge judges the current tier by th
 - Unit: USD / 1M tokens (official pricing-page basis). Cost = input-miss × cacheMiss + output × output + (cache-read + cache-write) × cacheHit
 - Calls before the peak-era boundary (2026-08-16 16:00 UTC) are billed at the then-current base price (historical correctness)
 - Each call is billed at the tier of its **event timestamp**, so costs do not drift across a peak/off-peak switch
-- The ledger stores USD; display converts via the configurable exchange rate
+- The ledger stores USD; display converts via the fixed 6.82 rate to CNY (default) or shows USD directly
 
 ## Install
 
@@ -46,8 +46,8 @@ Restart `dsh web` after installing.
 ## Usage
 
 - The badge floats to the right of the composer, vertically centered with it; on narrow windows it moves above the composer instead, never covering the input area or the built-in stats line
-- Click the badge to expand/collapse the detail panel: windows, current tier prices, token breakdown, exchange rate
-- Exchange-rate edits apply immediately and persist
+- Click the badge to expand/collapse the detail panel: windows, current tier prices, token breakdown, currency switch (¥ / $)
+- Currency choice applies immediately and persists; CNY shows 2 decimals, USD 4 decimals
 
 ## Layout
 
@@ -87,7 +87,7 @@ node test/verify.mjs                                       # peak math & billing
 
 - Prices are built in (V4-Flash / V4-Pro, official 2026-08-17 rates). **When the official prices change, update both `lib/pricing.js` (billing) and the `DISPLAY_PRICES` constant in `lib/client.js` (display) manually**
 - Tier judgement is fixed to UTC (official definition); the window table displays Beijing time (UTC+8)
-- Cost is USD-ledger × exchange rate; default 7.2, adjustable in the expanded panel
+- Cost is USD-ledger × fixed 6.82 rate for CNY (matching the official CNY prices); switchable to USD in the expanded panel
 
 ## Credits & license
 
