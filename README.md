@@ -61,7 +61,7 @@ dsh-tidewatch
 │   ├── index.js          # 宿主：costUsage 会话投影（按事件时刻计费）
 │   └── client.js         # 前端：悬浮徽章（__ModuleLoader__ bundle）
 ├── docs/PORTING.md       # 移植到其他宿主的适配说明
-└── test/verify.mjs       # 纯模块自检（node test/verify.mjs，17 项）
+└── test/verify.mjs       # 纯模块自检（node test/verify.mjs，19 项）
 ```
 
 ## 数据流
@@ -80,7 +80,7 @@ dsh-tidewatch
 
 ```sh
 DSH_CHECKOUT=<harness 源码根目录> bash scripts/build.sh   # 语法检查 + zod junction
-node test/verify.mjs                                       # 峰谷数学与计费自检（17 项）
+node test/verify.mjs                                       # 峰谷数学与计费自检（19 项，含双份常量一致性）
 ```
 
 ## 已知限制

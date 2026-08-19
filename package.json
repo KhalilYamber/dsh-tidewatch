@@ -1,6 +1,6 @@
 {
   "name": "dsh-tidewatch",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "DeepSeek 峰谷时刻悬浮卡片：官方峰谷时段、当前档位、距下一阶段倒计时与本次会话 API 花费（人民币）。A floating tide card for DeepSeek Harness: official peak/off-peak windows, live phase countdown and this session's API cost in CNY.",
   "type": "module",
   "main": "lib/index.js",

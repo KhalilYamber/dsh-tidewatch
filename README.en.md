@@ -61,7 +61,7 @@ dsh-tidewatch
 │   ├── index.js          # host: costUsage session projection (billed per event time)
 │   └── client.js         # browser: floating badge (__ModuleLoader__ bundle)
 ├── docs/PORTING.md       # adaptation notes for other hosts
-└── test/verify.mjs       # pure-module self-test (node test/verify.mjs, 17 checks)
+└── test/verify.mjs       # pure-module self-test (node test/verify.mjs, 19 checks)
 ```
 
 ## Data flow
@@ -80,7 +80,7 @@ model-call usage blocks (assistant/chunk, assistant/message events)
 
 ```sh
 DSH_CHECKOUT=<harness source root> bash scripts/build.sh   # syntax check + zod junction
-node test/verify.mjs                                       # peak math & billing self-test (17 checks)
+node test/verify.mjs                                       # peak math & billing self-test (19 checks, incl. dual-constant consistency)
 ```
 
 ## Known limitations
