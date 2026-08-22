@@ -21,7 +21,7 @@ const libDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'lib')
  */
 function extractClientConst(name) {
   const src = readFileSync(join(libDir, 'client.js'), 'utf8')
-  const re = new RegExp('const ' + name + ' = ([\\s\\S]*?)\\n\\n')
+  const re = new RegExp('const ' + name + ' = ([\\s\\S]*?)\\r?\\n\\r?\\n')
   const m = re.exec(src)
   assert.ok(m !== null, `client.js 中未找到常量 ${name}`)
   // eslint-disable-next-line no-new-func
@@ -69,6 +69,32 @@ ok('UTC 03:59 在峰时段（半开区间端点）', () => {
 })
 ok('UTC 04:00 不在峰时段（半开区间端点）', () => {
   assert.equal(isPeakHour(Date.parse('2026-08-19T04:00:00Z')), false)
+})
+
+// ── 周末规则（官方 2026-08-23 起：周六/周日 UTC 全天谷期）──
+ok('周六 07:00 UTC（工作日是峰时）→ 谷期', () => {
+  assert.equal(isPeakHour(Date.parse('2026-08-22T07:00:00Z')), false)
+})
+ok('周日 07:00 UTC（工作日是峰时）→ 谷期', () => {
+  assert.equal(isPeakHour(Date.parse('2026-08-23T07:00:00Z')), false)
+})
+ok('周六 01:30 UTC（工作日是峰时）→ 谷期', () => {
+  assert.equal(isPeakHour(Date.parse('2026-08-22T01:30:00Z')), false)
+})
+ok('周一 07:00 UTC → 峰时（回到工作日窗口）', () => {
+  assert.equal(isPeakHour(Date.parse('2026-08-24T07:00:00Z')), true)
+})
+ok('周六 14:00 UTC 相位：谷期，下一切换点 = 下周一 01:00 进入峰', () => {
+  const ph = peakPhaseAt(Date.parse('2026-08-22T14:00:00Z'), DEFAULT_PEAK_WINDOWS)
+  assert.equal(ph.inPeak, false)
+  assert.equal(ph.nextAtMs, Date.parse('2026-08-24T01:00:00Z'))
+  assert.equal(ph.nextIntoPeak, true)
+})
+ok('周日整天相位：谷期，下一切换点 = 下周一 01:00 进入峰', () => {
+  const ph = peakPhaseAt(Date.parse('2026-08-23T08:00:00Z'), DEFAULT_PEAK_WINDOWS)
+  assert.equal(ph.inPeak, false)
+  assert.equal(ph.nextAtMs, Date.parse('2026-08-24T01:00:00Z'))
+  assert.equal(ph.nextIntoPeak, true)
 })
 
 // ── peakPhaseAt（当前相位 + 下一切换点）──

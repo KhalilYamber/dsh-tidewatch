@@ -22,6 +22,8 @@ DeepSeek introduced peak/off-peak time-of-day pricing on 2026-08-17:
 
 Off-peak prices are half of peak prices. The badge judges the current tier by the UTC windows (official definition); the table display uses Beijing time.
 
+**Weekend rule (since 2026-08-23)**: Saturdays and Sundays (UTC calendar days) are billed at off-peak prices all day, with no peak/off-peak switch; the next phase switch lands at the first peak window of the following Monday.
+
 ## Billing model
 
 - Unit: USD / 1M tokens (official pricing-page basis). Cost = input-miss × cacheMiss + output × output + (cache-read + cache-write) × cacheHit
