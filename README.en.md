@@ -24,6 +24,16 @@ Off-peak prices are half of peak prices. The badge judges the current tier by th
 
 **Weekend rule (since 2026-08-23)**: Saturdays and Sundays (UTC calendar days) are billed at off-peak prices all day, with no peak/off-peak switch; the next phase switch lands at the first peak window of the following Monday.
 
+## Price timelines (official 2026-09-10 V4.1-Flash)
+
+| Effective | Model | Billing |
+|---|---|---|
+| From 2026-09-10 04:00 UTC | `deepseek-flash` (and legacy names `deepseek-v4-flash` / `deepseek-v4-flash-vision-exp`) | V4.1-Flash rates |
+| Before that point | legacy Flash names | previous V4-Flash rates (historical correctness) |
+| From 2026-09-14 04:00 UTC | `deepseek-v4-pro` | requests route to V4.1-Flash and bill at Flash rates |
+
+Official sources: [changelog 2026-09-10](https://api-docs.deepseek.com/en/updates/), [Models & Pricing](https://api-docs.deepseek.com/en/quick_start/pricing).
+
 ## Billing model
 
 - Unit: USD / 1M tokens (official pricing-page basis). Cost = input-miss × cacheMiss + output × output + (cache-read + cache-write) × cacheHit
@@ -64,7 +74,7 @@ dsh-tidewatch
 │   ├── index.js          # host: costUsage session projection (billed per event time)
 │   └── client.js         # browser: floating badge (__ModuleLoader__ bundle)
 ├── docs/PORTING.md       # adaptation notes for other hosts
-└── test/verify.mjs       # pure-module self-test (node test/verify.mjs, 19 checks)
+└── test/verify.mjs       # pure-module self-test (node test/verify.mjs)
 ```
 
 ## Data flow
@@ -83,14 +93,15 @@ model-call usage blocks (assistant/chunk, assistant/message events)
 
 ```sh
 DSH_CHECKOUT=<harness source root> bash scripts/build.sh   # syntax check + zod junction
-node test/verify.mjs                                       # peak math & billing self-test (19 checks, incl. dual-constant consistency)
+node test/verify.mjs                                       # peak math & billing self-test (incl. dual-constant consistency and price-time boundaries)
 ```
 
 ## Known limitations
 
-- Prices are built in (V4-Flash / V4-Pro, official 2026-08-17 rates). **When the official prices change, update both `lib/pricing.js` (billing) and the `DISPLAY_PRICES` constant in `lib/client.js` (display) manually**
+- Prices are built in (V4.1-Flash / V4-Pro, official 2026-09-10 rates; includes the 9/14 Pro→Flash routing timeline). **When the official prices change, update both `lib/pricing.js` (billing) and the `DISPLAY_PRICES` constant in `lib/client.js` (display) manually**
+- The expanded panel's "current tier prices" is a static display table: **after 2026-09-14**, if a session still declares `deepseek-v4-pro`, the ledger bills at Flash rates but the panel still lists Pro prices (billing is correct; display is approximate). Billing always follows `lib/pricing.js`
 - Tier judgement is fixed to UTC (official definition); the window table displays Beijing time (UTC+8)
-- Cost is USD-ledger × fixed 6.82 rate for CNY (matching the official CNY prices); switchable to USD in the expanded panel
+- Cost is USD-ledger × fixed 6.82 rate for CNY (matching the official Pro CNY rates; Flash CNY rates imply ~6.67, so CNY display is approximate for Flash); switchable to USD in the expanded panel
 
 ## Credits & license
 

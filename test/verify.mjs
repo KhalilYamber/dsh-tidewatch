@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url'
 import {
   isPeakHour, peakPhaseAt, costOf, priceEntryFor,
   DEFAULT_PEAK_WINDOWS, DEFAULT_PRICE_TABLE, LEGACY_BASE_BOUNDARY,
+  FLASH_V41_BOUNDARY, PRO_TO_FLASH_BOUNDARY,
 } from '../lib/pricing.js'
 
 const libDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'lib')
@@ -118,27 +119,33 @@ ok('12:00 UTC 相位与下一切换点（次日 01:00 进入峰）', () => {
 })
 
 // ── priceEntryFor（模型匹配）──
-ok('deepseek-v4-flash 命中 flash 条目', () => {
-  assert.equal(priceEntryFor('deepseek-v4-flash').offPeak.output, 0.66)
+ok('deepseek-flash 命中 flash 条目', () => {
+  assert.equal(priceEntryFor('deepseek-flash').offPeak.output, 0.6)
+})
+ok('deepseek-v4-flash 旧名命中 flash 条目（新价）', () => {
+  assert.equal(priceEntryFor('deepseek-v4-flash').offPeak.output, 0.6)
+})
+ok('deepseek-v4-flash-vision-exp 命中 flash 条目（新价）', () => {
+  assert.equal(priceEntryFor('deepseek-v4-flash-vision-exp').offPeak.output, 0.6)
 })
 ok('deepseek-v4-pro 命中 pro 条目', () => {
   assert.equal(priceEntryFor('deepseek-v4-pro').offPeak.output, 1.98)
 })
-ok('未知模型回退 default（= flash 价）', () => {
-  assert.equal(priceEntryFor('gpt-999').offPeak.output, 0.66)
+ok('未知模型回退 default（= V4.1-Flash 新价）', () => {
+  assert.equal(priceEntryFor('gpt-999').offPeak.output, 0.6)
 })
 
 // ── costOf（美元 / 1M tokens 口径）──
 const flash = priceEntryFor('deepseek-v4-flash')
-ok('峰期 1M 输入未命中 + 1M 输出 = 0.44 + 1.32 = 1.76 USD', () => {
+ok('峰期 1M 输入未命中 + 1M 输出 = 0.44 + 1.32 = 1.76 USD（9/10 前旧 V4-Flash 价）', () => {
   const c = costOf({ input: 1e6, output: 1e6, cacheRead: 0, cacheWrite: 0 }, flash, Date.parse('2026-08-19T07:00:00Z'))
   assert.ok(Math.abs(c - 1.76) < 1e-9)
 })
-ok('谷期 1M 输入未命中 + 1M 输出 = 0.22 + 0.66 = 0.88 USD', () => {
+ok('谷期 1M 输入未命中 + 1M 输出 = 0.22 + 0.66 = 0.88 USD（9/10 前旧 V4-Flash 价）', () => {
   const c = costOf({ input: 1e6, output: 1e6, cacheRead: 0, cacheWrite: 0 }, flash, Date.parse('2026-08-19T05:00:00Z'))
   assert.ok(Math.abs(c - 0.88) < 1e-9)
 })
-ok('缓存读写按命中价计费', () => {
+ok('缓存读写按命中价计费（9/10 前旧 V4-Flash 价）', () => {
   const c = costOf({ input: 0, output: 0, cacheRead: 1e6, cacheWrite: 0 }, flash, Date.parse('2026-08-19T05:00:00Z'))
   assert.ok(Math.abs(c - 0.007) < 1e-9)
 })
@@ -150,6 +157,52 @@ ok('峰谷时代前（2026-08-10）按 legacyBase 计费', () => {
 ok('非负保护：负 token 按 0 计', () => {
   const c = costOf({ input: -5, output: -1, cacheRead: 0, cacheWrite: 0 }, flash, Date.parse('2026-08-19T05:00:00Z'))
   assert.equal(c, 0)
+})
+
+// ── V4.1-Flash 价格时效（2026-09-10 / 2026-09-14 边界）──
+ok('9/10 后 flash 谷期 1M miss + 1M out = 0.15 + 0.6 = 0.75 USD', () => {
+  const c = costOf({ input: 1e6, output: 1e6, cacheRead: 0, cacheWrite: 0 }, flash, Date.parse('2026-09-11T05:00:00Z'))
+  assert.ok(Math.abs(c - 0.75) < 1e-9)
+})
+ok('9/10 后 flash 峰期 1M miss + 1M out = 0.3 + 1.2 = 1.5 USD', () => {
+  const c = costOf({ input: 1e6, output: 1e6, cacheRead: 0, cacheWrite: 0 }, flash, Date.parse('2026-09-11T07:00:00Z'))
+  assert.ok(Math.abs(c - 1.5) < 1e-9)
+})
+ok('9/10 前 1ms 仍按旧 V4-Flash 峰价（边界左邻，时刻仍在峰窗）', () => {
+  const justBefore = Date.parse(FLASH_V41_BOUNDARY) - 1
+  const c = costOf({ input: 1e6, output: 0, cacheRead: 0, cacheWrite: 0 }, flash, justBefore)
+  // 04:00 boundary − 1ms ≈ 03:59 UTC → peak window of the *old* V4-Flash table.
+  assert.ok(Math.abs(c - 0.44) < 1e-9)
+})
+ok('9/10 当刻起按 V4.1-Flash 谷价（04:00 UTC 落在峰窗外）', () => {
+  const justAt = Date.parse(FLASH_V41_BOUNDARY)
+  const c = costOf({ input: 1e6, output: 0, cacheRead: 0, cacheWrite: 0 }, flash, justAt)
+  assert.ok(Math.abs(c - 0.15) < 1e-9)
+})
+ok('9/14 前 pro 仍按 Pro 谷价（0.66 miss）', () => {
+  const pro = priceEntryFor('deepseek-v4-pro')
+  const c = costOf({ input: 1e6, output: 0, cacheRead: 0, cacheWrite: 0 }, pro, Date.parse('2026-09-13T05:00:00Z'))
+  assert.ok(Math.abs(c - 0.66) < 1e-9)
+})
+ok('9/14 后 pro 路由到 Flash 谷价（0.15 miss）', () => {
+  const pro = priceEntryFor('deepseek-v4-pro')
+  const c = costOf({ input: 1e6, output: 0, cacheRead: 0, cacheWrite: 0 }, pro, Date.parse('2026-09-14T05:00:00Z'))
+  assert.ok(Math.abs(c - 0.15) < 1e-9)
+})
+ok('9/14 当刻（04:00 UTC 谷期）pro 按 Flash 谷价（0.15 miss）', () => {
+  const pro = priceEntryFor('deepseek-v4-pro')
+  const c = costOf({ input: 1e6, output: 0, cacheRead: 0, cacheWrite: 0 }, pro, Date.parse(PRO_TO_FLASH_BOUNDARY))
+  // 2026-09-14 is a Monday; 04:00 UTC is off-peak (peak windows are half-open).
+  assert.ok(Math.abs(c - 0.15) < 1e-9)
+})
+ok('9/14 后 pro 峰期按 Flash 峰价（0.3 miss）', () => {
+  const pro = priceEntryFor('deepseek-v4-pro')
+  const c = costOf({ input: 1e6, output: 0, cacheRead: 0, cacheWrite: 0 }, pro, Date.parse('2026-09-15T07:00:00Z'))
+  assert.ok(Math.abs(c - 0.3) < 1e-9)
+})
+ok('legacy 峰谷时代前的 flash 仍走 legacyBase，不受 Flash 新价影响', () => {
+  const c = costOf({ input: 1e6, output: 0, cacheRead: 0, cacheWrite: 0 }, flash, Date.parse('2026-08-01T07:00:00Z'))
+  assert.ok(Math.abs(c - 0.14) < 1e-9)
 })
 
 console.log(`[dsh-tidewatch] verify: ${passed} passed`)
