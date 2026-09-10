@@ -119,28 +119,43 @@ ok('12:00 UTC 相位与下一切换点（次日 01:00 进入峰）', () => {
 
 // ── priceEntryFor（模型匹配）──
 ok('deepseek-v4-flash 命中 flash 条目', () => {
-  assert.equal(priceEntryFor('deepseek-v4-flash').offPeak.output, 0.66)
+  assert.equal(priceEntryFor('deepseek-v4-flash').offPeak.output, 0.6)
+})
+ok('deepseek-v4-flash-vision-exp 经别名命中 flash 条目', () => {
+  assert.equal(priceEntryFor('deepseek-v4-flash-vision-exp').offPeak.output, 0.6)
+})
+ok('deepseek-flash 直接命中 flash 条目', () => {
+  assert.equal(priceEntryFor('deepseek-flash').offPeak.output, 0.6)
 })
 ok('deepseek-v4-pro 命中 pro 条目', () => {
   assert.equal(priceEntryFor('deepseek-v4-pro').offPeak.output, 1.98)
 })
+ok('deepseek-v4-pro 退休前（2026-09-10）仍按 pro 价', () => {
+  assert.equal(priceEntryFor('deepseek-v4-pro', Date.parse('2026-09-10T00:00:00Z')).offPeak.output, 1.98)
+})
+ok('deepseek-v4-pro 退休前一刻（2026-09-14 03:59:59 UTC）仍按 pro 价', () => {
+  assert.equal(priceEntryFor('deepseek-v4-pro', Date.parse('2026-09-14T03:59:59Z')).offPeak.output, 1.98)
+})
+ok('deepseek-v4-pro 退休后（2026-09-14 04:00 UTC）按 flash 价', () => {
+  assert.equal(priceEntryFor('deepseek-v4-pro', Date.parse('2026-09-14T04:00:00Z')).offPeak.output, 0.6)
+})
 ok('未知模型回退 default（= flash 价）', () => {
-  assert.equal(priceEntryFor('gpt-999').offPeak.output, 0.66)
+  assert.equal(priceEntryFor('gpt-999').offPeak.output, 0.6)
 })
 
 // ── costOf（美元 / 1M tokens 口径）──
-const flash = priceEntryFor('deepseek-v4-flash')
-ok('峰期 1M 输入未命中 + 1M 输出 = 0.44 + 1.32 = 1.76 USD', () => {
+const flash = priceEntryFor('deepseek-flash')
+ok('峰期 1M 输入未命中 + 1M 输出 = 0.3 + 1.2 = 1.5 USD', () => {
   const c = costOf({ input: 1e6, output: 1e6, cacheRead: 0, cacheWrite: 0 }, flash, Date.parse('2026-08-19T07:00:00Z'))
-  assert.ok(Math.abs(c - 1.76) < 1e-9)
+  assert.ok(Math.abs(c - 1.5) < 1e-9)
 })
-ok('谷期 1M 输入未命中 + 1M 输出 = 0.22 + 0.66 = 0.88 USD', () => {
+ok('谷期 1M 输入未命中 + 1M 输出 = 0.15 + 0.6 = 0.75 USD', () => {
   const c = costOf({ input: 1e6, output: 1e6, cacheRead: 0, cacheWrite: 0 }, flash, Date.parse('2026-08-19T05:00:00Z'))
-  assert.ok(Math.abs(c - 0.88) < 1e-9)
+  assert.ok(Math.abs(c - 0.75) < 1e-9)
 })
 ok('缓存读写按命中价计费', () => {
   const c = costOf({ input: 0, output: 0, cacheRead: 1e6, cacheWrite: 0 }, flash, Date.parse('2026-08-19T05:00:00Z'))
-  assert.ok(Math.abs(c - 0.007) < 1e-9)
+  assert.ok(Math.abs(c - 0.003) < 1e-9)
 })
 ok('峰谷时代前（2026-08-10）按 legacyBase 计费', () => {
   assert.ok(Date.parse('2026-08-10T00:00:00Z') < Date.parse(LEGACY_BASE_BOUNDARY))

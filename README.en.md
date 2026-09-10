@@ -6,7 +6,7 @@
 - Collapsed: `● 峰期 距谷期 03:33 · ¥0.12` (peak, 03:33 to off-peak, ¥0.12)
 - Expanded (click to open): official peak windows (Beijing time), current tier prices, this session's token breakdown, exchange-rate setting
 - Billing: official peak/off-peak tier prices, billed by the **actual timestamp of each call**, cache hit/miss charged separately
-- Currency: CNY display by default (fixed rate 6.82, matching the official CNY prices); one-click switch to USD (4 decimals) in the expanded panel
+- Currency: CNY display by default (fixed rate 6.67, matching the official CNY prices); one-click switch to USD (4 decimals) in the expanded panel
 - Follows the GUI light/dark theme (`--dsw-*` tokens)
 
 ## Peak windows (official basis)
@@ -29,7 +29,7 @@ Off-peak prices are half of peak prices. The badge judges the current tier by th
 - Unit: USD / 1M tokens (official pricing-page basis). Cost = input-miss × cacheMiss + output × output + (cache-read + cache-write) × cacheHit
 - Calls before the peak-era boundary (2026-08-16 16:00 UTC) are billed at the then-current base price (historical correctness)
 - Each call is billed at the tier of its **event timestamp**, so costs do not drift across a peak/off-peak switch
-- The ledger stores USD; display converts via the fixed 6.82 rate to CNY (default) or shows USD directly
+- The ledger stores USD; display converts via the fixed 6.67 rate to CNY (default) or shows USD directly
 
 ## Install
 
@@ -83,14 +83,14 @@ model-call usage blocks (assistant/chunk, assistant/message events)
 
 ```sh
 DSH_CHECKOUT=<harness source root> bash scripts/build.sh   # syntax check + zod junction
-node test/verify.mjs                                       # peak math & billing self-test (19 checks, incl. dual-constant consistency)
+node test/verify.mjs                                       # peak math & billing self-test (30 checks, incl. dual-constant consistency)
 ```
 
 ## Known limitations
 
-- Prices are built in (V4-Flash / V4-Pro, official 2026-08-17 rates). **When the official prices change, update both `lib/pricing.js` (billing) and the `DISPLAY_PRICES` constant in `lib/client.js` (display) manually**
+- Prices are built in (V4.1-Flash since 2026-09-10 / V4-Pro, official 2026-08-17 rates). Since 2026-09-14 04:00 UTC (12:00 Beijing), `deepseek-v4-pro` routes to Flash and is billed at Flash prices. **When the official prices change, update both `lib/pricing.js` (billing) and the `DISPLAY_PRICES` constant in `lib/client.js` (display) manually**
 - Tier judgement is fixed to UTC (official definition); the window table displays Beijing time (UTC+8)
-- Cost is USD-ledger × fixed 6.82 rate for CNY (matching the official CNY prices); switchable to USD in the expanded panel
+- Cost is USD-ledger × fixed 6.67 rate for CNY (matching the official CNY prices); switchable to USD in the expanded panel
 
 ## Credits & license
 
