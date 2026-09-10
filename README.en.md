@@ -26,7 +26,7 @@ Off-peak prices are half of peak prices. The badge judges the current tier by th
 
 ## Billing model
 
-- Unit: USD / 1M tokens (official pricing-page basis). Cost = input-miss × cacheMiss + output × output + (cache-read + cache-write) × cacheHit
+- Unit: USD / 1M tokens (official pricing-page basis). Cost = input-miss × cacheMiss + output × output + (cache-read + cache-write) × cacheHit; "output" already includes reasoning tokens (billed at the output rate)
 - Calls before the peak-era boundary (2026-08-16 16:00 UTC) are billed at the then-current base price (historical correctness)
 - Each call is billed at the tier of its **event timestamp**, so costs do not drift across a peak/off-peak switch
 - The ledger stores USD; display converts via the fixed 6.67 rate to CNY (default) or shows USD directly
@@ -64,7 +64,7 @@ dsh-tidewatch
 │   ├── index.js          # host: costUsage session projection (billed per event time)
 │   └── client.js         # browser: floating badge (__ModuleLoader__ bundle)
 ├── docs/PORTING.md       # adaptation notes for other hosts
-└── test/verify.mjs       # pure-module self-test (node test/verify.mjs, 19 checks)
+└── test/verify.mjs       # pure-module self-test (node test/verify.mjs, 30 checks)
 ```
 
 ## Data flow

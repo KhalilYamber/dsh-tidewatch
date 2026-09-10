@@ -26,7 +26,7 @@ DeepSeek 官方自 2026-08-17 起实施峰谷分时定价：
 
 ## 计费口径
 
-- 价格单位：美元 / 1M tokens（官方定价页口径），成本 = 输入未命中 × cacheMiss + 输出 × output + (缓存读 + 缓存写) × cacheHit
+- 价格单位：美元 / 1M tokens（官方定价页口径），成本 = 输入未命中 × cacheMiss + 输出 × output + (缓存读 + 缓存写) × cacheHit；其中「输出」已含推理 token
 - 峰谷时代之前（2026-08-16 16:00 UTC）的调用按当时的基础价计费（历史正确性）
 - 每次调用的费用按**事件发生时刻**的档位计算，跨峰谷切换不漂移
 - 账本金额以美元存储，显示时按固定汇率 6.67 换算人民币（默认）或直接显示美元
@@ -64,7 +64,7 @@ dsh-tidewatch
 │   ├── index.js          # 宿主：costUsage 会话投影（按事件时刻计费）
 │   └── client.js         # 前端：悬浮徽章（__ModuleLoader__ bundle）
 ├── docs/PORTING.md       # 移植到其他宿主的适配说明
-└── test/verify.mjs       # 纯模块自检（node test/verify.mjs，19 项）
+└── test/verify.mjs       # 纯模块自检（node test/verify.mjs，30 项）
 ```
 
 ## 数据流
