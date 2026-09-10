@@ -24,6 +24,16 @@ DeepSeek 官方自 2026-08-17 起实施峰谷分时定价：
 
 **周末规则（2026-08-23 起）**：周六/周日（UTC 自然日）全天按谷期计价，无峰谷切换；下一阶段切换点为下周一首次进入峰时。
 
+## 价格时效（官方 2026-09-10 V4.1-Flash）
+
+| 生效点 | 模型 | 计费 |
+|---|---|---|
+| 2026-09-10 04:00 UTC 起 | `deepseek-flash`（及旧名 `deepseek-v4-flash` / `deepseek-v4-flash-vision-exp`） | V4.1-Flash 新价 |
+| 该点之前 | 旧 Flash 名 | 旧 V4-Flash 价（历史正确性） |
+| 2026-09-14 04:00 UTC 起 | `deepseek-v4-pro` | 请求路由到 V4.1-Flash，按 Flash 价计费 |
+
+官方依据：[更新日志 2026-09-10](https://api-docs.deepseek.com/zh-cn/updates/)、[模型与价格](https://api-docs.deepseek.com/zh-cn/quick_start/pricing)。
+
 ## 计费口径
 
 - 价格单位：美元 / 1M tokens（官方定价页口径），成本 = 输入未命中 × cacheMiss + 输出 × output + (缓存读 + 缓存写) × cacheHit
@@ -64,7 +74,7 @@ dsh-tidewatch
 │   ├── index.js          # 宿主：costUsage 会话投影（按事件时刻计费）
 │   └── client.js         # 前端：悬浮徽章（__ModuleLoader__ bundle）
 ├── docs/PORTING.md       # 移植到其他宿主的适配说明
-└── test/verify.mjs       # 纯模块自检（node test/verify.mjs，19 项）
+└── test/verify.mjs       # 纯模块自检（node test/verify.mjs）
 ```
 
 ## 数据流
@@ -83,14 +93,15 @@ dsh-tidewatch
 
 ```sh
 DSH_CHECKOUT=<harness 源码根目录> bash scripts/build.sh   # 语法检查 + zod junction
-node test/verify.mjs                                       # 峰谷数学与计费自检（19 项，含双份常量一致性）
+node test/verify.mjs                                       # 峰谷数学与计费自检（含双份常量一致性与价格时效边界）
 ```
 
 ## 已知限制
 
-- 价格表内置（V4-Flash / V4-Pro 官方 2026-08-17 价）。**官方调价后需手动同步** `lib/pricing.js`（计费）与 `lib/client.js` 的 `DISPLAY_PRICES`（展示）两处常量
+- 价格表内置（V4.1-Flash / V4-Pro，官方 2026-09-10 价；含 9/14 后 Pro 路由到 Flash 的时效边界）。**官方调价后需手动同步** `lib/pricing.js`（计费）与 `lib/client.js` 的 `DISPLAY_PRICES`（展示）两处常量
+- 展开面板的「当前档位价格」为静态展示表：**2026-09-14 后**若会话仍声明 `deepseek-v4-pro`，账本已按 Flash 计费，但面板价目仍显示 Pro 价（计费正确，展示为近似）。计费始终以 `lib/pricing.js` 为准
 - 时段判定固定按 UTC（官方口径），时段表展示按北京时间（UTC+8）
-- 花费为美元账本 × 固定汇率 6.82 换算人民币（与官方人民币标价一致）；展开面板可切换美元显示
+- 花费为美元账本 × 固定汇率 6.82 换算人民币（与 Pro 官方人民币标价的隐含汇率一致；Flash 官方人民币标价隐含约 6.67，显示为近似）；展开面板可切换美元显示
 
 ## 借鉴与许可
 
