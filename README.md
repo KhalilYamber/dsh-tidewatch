@@ -27,8 +27,15 @@ DeepSeek 官方自 2026-08-17 起实施峰谷分时定价：
 ## 计费口径
 
 - 价格单位：美元 / 1M tokens（官方定价页口径），成本 = 输入未命中 × cacheMiss + 输出 × output + (缓存读 + 缓存写) × cacheHit；其中「输出」已含推理 token
-- 峰谷时代之前（2026-08-16 16:00 UTC）的调用按当时的基础价计费（历史正确性）
-- 每次调用的费用按**事件发生时刻**的档位计算，跨峰谷切换不漂移
+- **三段价格时代**，按调用发生时刻选档（历史正确性；档位顺序为 缓存命中 / 输入未命中 / 输出）：
+
+  | 时代 | 时间范围（UTC） | deepseek-flash 档位 |
+  |---|---|---|
+  | 基础价 | 2026-08-16 16:00 之前 | 0.0028 / 0.14 / 0.28 |
+  | 首版峰谷价 | 2026-08-16 16:00 ~ 2026-09-10 04:00 | 峰 0.014 / 0.44 / 1.32，谷为峰的一半 |
+  | V4.1 Flash 新价 | 2026-09-10 04:00 起 | 峰 0.006 / 0.3 / 1.2，谷为峰的一半 |
+
+- 每次调用的费用按**事件发生时刻**的档位计算，跨峰谷切换与跨调价均不漂移
 - 账本金额以美元存储，显示时按固定汇率 6.67 换算人民币（默认）或直接显示美元
 
 ## 安装
@@ -60,11 +67,11 @@ dsh-tidewatch
 ├── cordis.patch.yml      # 装配行
 ├── scripts/build.sh      # 构建：语法检查 + zod junction
 ├── lib/
-│   ├── pricing.js        # 纯函数：峰谷窗口、isPeakHour/peakPhaseAt、价格表、costOf
+│   ├── pricing.js        # 纯函数：峰谷窗口、isPeakHour/peakPhaseAt、三段价格时代、costOf
 │   ├── index.js          # 宿主：costUsage 会话投影（按事件时刻计费）
 │   └── client.js         # 前端：悬浮徽章（__ModuleLoader__ bundle）
 ├── docs/PORTING.md       # 移植到其他宿主的适配说明
-└── test/verify.mjs       # 纯模块自检（node test/verify.mjs，30 项）
+└── test/verify.mjs       # 纯模块自检（node test/verify.mjs，38 项）
 ```
 
 ## 数据流
@@ -83,12 +90,13 @@ dsh-tidewatch
 
 ```sh
 DSH_CHECKOUT=<harness 源码根目录> bash scripts/build.sh   # 语法检查 + zod junction
-node test/verify.mjs                                       # 峰谷数学与计费自检（30 项，含双份常量一致性）
+node test/verify.mjs                                       # 峰谷数学与计费自检（38 项，含双份常量一致性）
 ```
 
 ## 已知限制
 
-- 价格表内置（V4.1-Flash 2026-09-10 新价 / V4-Pro 官方 2026-08-17 价）。2026-09-14 04:00 UTC（北京 12:00）起 `deepseek-v4-pro` 路由到 Flash 按 Flash 价计费。**官方调价后需手动同步** `lib/pricing.js`（计费）与 `lib/client.js` 的 `DISPLAY_PRICES`（展示）两处常量
+- 价格表内置，含三段价格时代（基础价 / 首版峰谷价 / V4.1 Flash 新价）；V4-Pro 为官方 2026-08-17 价。2026-09-14 04:00 UTC（北京 12:00）起 `deepseek-v4-pro` 路由到 Flash 按 Flash 价计费。**官方调价后需手动同步** `lib/pricing.js`（计费）与 `lib/client.js` 的 `DISPLAY_PRICES`（展示）两处常量，并为旧价补一段历史档
+- 模型名映射：现役 `deepseek-flash`（V4.1 Flash）；别名 `deepseek-v4-flash`、`deepseek-v4-flash-vision-exp`、`deepseek-v4.1-flash` 均按现役 flash 价计费（见 `MODEL_ALIASES`）
 - 时段判定固定按 UTC（官方口径），时段表展示按北京时间（UTC+8）
 - 花费为美元账本 × 固定汇率 6.67 换算人民币（与官方人民币标价一致）；展开面板可切换美元显示
 
