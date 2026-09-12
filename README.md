@@ -5,7 +5,7 @@
 - 状态点：**峰期橙红 / 谷期蓝绿**，一眼可辨
 - 折叠态：`● 峰期 距谷期 03:33 · ¥0.12`
 - 展开态（点击展开）：官方峰谷时段表（北京时间）、当前档位价格、本次会话 Token 明细、汇率设置
-- 计费：官方峰谷两档价格（美元口径），按每次调用**实际发生时刻**的档位计价，缓存命中/未命中分开
+- 计费：官方峰谷两档价格（美元口径；含 基础价 / 首版峰谷价 / V4.1 Flash 新价 三段历史档），按每次调用**实际发生时刻**的档位计价，缓存命中/未命中分开
 - 币种：默认人民币显示（固定汇率 6.67，与官方人民币标价一致），展开面板可一键切换美元（4 位小数）
 - 跟随 GUI 亮/暗主题（`--dsw-*` 变量）
 
@@ -40,17 +40,34 @@ DeepSeek 官方自 2026-08-17 起实施峰谷分时定价：
 
 ## 安装
 
-> 需求：Node.js ≥ 20 + DeepSeek Harness（带 `dsh plugin` 命令的版本）。
+> 需求：Node.js ≥ 20 + 带 `dsh plugin` 命令的 DeepSeek Harness。
 
 ```sh
-# npm 包安装（发布后可用）
+# 方式一：从 GitHub 直装（推荐，跟随 main 最新）
+dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
+
+# 方式二：从 Release 的 tgz 安装（可固定版本、可离线）
+#   先到 Releases 页面下载 dsh-tidewatch-<版本>.tgz，然后：
+dsh plugin --profile web add ./dsh-tidewatch-1.1.1.tgz
+
+# 方式三：npm（注意：npm 上的版本可能落后于 GitHub Releases，以 Releases 页为准）
 dsh plugin --profile web add dsh-tidewatch
 
-# 或本地目录（开发调试）
-dsh plugin --profile web add link:./dsh-tidewatch
+# 本地目录（开发调试）
+dsh plugin --profile web add link:/path/to/dsh-tidewatch
 ```
 
-安装后重启 `dsh web` 生效。
+安装后重启 `dsh web` 生效，输入框右侧会出现潮汐徽章。
+
+### 升级与卸载
+
+```sh
+dsh plugin --profile web update dsh-tidewatch    # 或重新执行上面的 add
+dsh plugin --profile web list dsh-tidewatch      # 查看已安装版本
+dsh plugin --profile web remove dsh-tidewatch    # 卸载
+```
+
+> **v1.1.1 升级提示**：该版本把计价口径改为「按调用时刻在三段价格时代中选档」，并把 `costUsage` 投影版本提升到 stateVersion 4。升级后已持久化的历史会话会重放一次，2026-08-16 ~ 2026-09-10 窗口的费用会恢复为**当时**的首版峰谷价（此前按新价计算，偏低）。实时计费不受影响。
 
 ## 使用
 
