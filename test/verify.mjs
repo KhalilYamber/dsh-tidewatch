@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url'
 import {
   isPeakHour, peakPhaseAt, costOf, priceEntryFor,
   DEFAULT_PEAK_WINDOWS, DEFAULT_PRICE_TABLE, LEGACY_BASE_BOUNDARY, FLASH_REPRICE_BOUNDARY,
-  MODEL_ALIASES,
+  V4_PRO_RETIRE_BOUNDARY, MODEL_ALIASES,
 } from '../lib/pricing.js'
 
 const libDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'lib')
@@ -137,14 +137,17 @@ ok('deepseek-flash 直接命中 flash 条目', () => {
 ok('deepseek-v4-pro 命中 pro 条目', () => {
   assert.equal(priceEntryFor('deepseek-v4-pro').offPeak.output, 1.98)
 })
-ok('deepseek-v4-pro 退休前（2026-09-10）仍按 pro 价', () => {
+ok('官方声明前（2026-09-10）pro 按 pro 价', () => {
   assert.equal(priceEntryFor('deepseek-v4-pro', Date.parse('2026-09-10T00:00:00Z')).offPeak.output, 1.98)
 })
-ok('deepseek-v4-pro 退休前一刻（2026-09-14 03:59:59 UTC）仍按 pro 价', () => {
-  assert.equal(priceEntryFor('deepseek-v4-pro', Date.parse('2026-09-14T03:59:59Z')).offPeak.output, 1.98)
+ok('官方声明生效日（2026-09-14 04:00 UTC）pro 仍按 pro 价（计费方式不变）', () => {
+  assert.equal(priceEntryFor('deepseek-v4-pro', Date.parse('2026-09-14T04:00:00Z')).offPeak.output, 1.98)
 })
-ok('deepseek-v4-pro 退休后（2026-09-14 04:00 UTC）按 flash 价', () => {
-  assert.equal(priceEntryFor('deepseek-v4-pro', Date.parse('2026-09-14T04:00:00Z')).offPeak.output, 0.6)
+ok('远期（2027-01-01）pro 仍按 pro 价（待官方另行通知）', () => {
+  assert.equal(priceEntryFor('deepseek-v4-pro', Date.parse('2027-01-01T00:00:00Z')).offPeak.output, 1.98)
+})
+ok('V4_PRO_RETIRE_BOUNDARY 为哨兵值（官方未给出换价日期）', () => {
+  assert.equal(Date.parse(V4_PRO_RETIRE_BOUNDARY), Date.UTC(9999, 11, 31))
 })
 ok('未知模型回退 default（= flash 价）', () => {
   assert.equal(priceEntryFor('gpt-999').offPeak.output, 0.6)

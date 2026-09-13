@@ -111,7 +111,7 @@ node test/verify.mjs                                       # peak math & billing
 
 ## Known limitations
 
-- Prices are built in, covering three eras (base price / first peak schedule / V4.1 Flash repricing); V4-Pro uses the official 2026-08-17 rates. Since 2026-09-14 04:00 UTC (12:00 Beijing), `deepseek-v4-pro` routes to Flash and is billed at Flash prices. **When the official prices change, update both `lib/pricing.js` (billing) and the `DISPLAY_PRICES` constant in `lib/client.js` (display) manually, and keep the superseded tiers as another historical era**
+- Prices are built in, covering three eras (base price / first peak schedule / V4.1 Flash repricing); V4-Pro uses the official 2026-08-17 rates; per footnote (2) on the official pricing page and the changelog entry of 2026-09-10, V4 Pro keeps being served after 2026-09-14 **with its billing method unchanged** (further notice to follow if that changes), so pro is always billed on its own rates and `V4_PRO_RETIRE_BOUNDARY` stays a sentinel pending an official date. **When the official prices change, update both `lib/pricing.js` (billing) and the `DISPLAY_PRICES` constant in `lib/client.js` (display) manually, and keep the superseded tiers as another historical era**
 - Model names: `deepseek-flash` is current (V4.1 Flash); the aliases `deepseek-v4-flash`, `deepseek-v4-flash-vision-exp` and `deepseek-v4.1-flash` are all billed at the current flash rate (see `MODEL_ALIASES`)
 - Tier judgement is fixed to UTC (official definition); the window table displays Beijing time (UTC+8)
 - Cost is USD-ledger × fixed 6.67 rate for CNY (matching the official CNY prices); switchable to USD in the expanded panel
