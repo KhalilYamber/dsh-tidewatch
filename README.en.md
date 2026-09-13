@@ -50,12 +50,11 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 #   download dsh-tidewatch-<version>.tgz from the Releases page, then:
 dsh plugin --profile web add ./dsh-tidewatch-1.1.1.tgz
 
-# Option 3: npm (note: the npm copy can lag behind GitHub Releases — trust the Releases page)
-dsh plugin --profile web add dsh-tidewatch
-
 # Local directory (development)
 dsh plugin --profile web add link:/path/to/dsh-tidewatch
 ```
+
+> **The npm channel is paused**: npm hosts only an old copy (1.0.6, published 2026-08-22) whose prices and rules are outdated. Do not install it or judge current billing from it — use the two options above.
 
 Restart `dsh web` after installing; the tide badge appears to the right of the composer.
 

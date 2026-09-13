@@ -50,12 +50,11 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 #   先到 Releases 页面下载 dsh-tidewatch-<版本>.tgz，然后：
 dsh plugin --profile web add ./dsh-tidewatch-1.1.1.tgz
 
-# 方式三：npm（注意：npm 上的版本可能落后于 GitHub Releases，以 Releases 页为准）
-dsh plugin --profile web add dsh-tidewatch
-
 # 本地目录（开发调试）
 dsh plugin --profile web add link:/path/to/dsh-tidewatch
 ```
+
+> **npm 渠道已暂停**：npm 上仅有一个 2026-08-22 发布的旧版本（1.0.6），其价格与规则均已过时。请勿安装该版本，也不要据它判断当前计价——以上面两种方式为准。
 
 安装后重启 `dsh web` 生效，输入框右侧会出现潮汐徽章。
 
