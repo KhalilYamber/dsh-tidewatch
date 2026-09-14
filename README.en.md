@@ -8,6 +8,7 @@
 - Billing: official peak/off-peak tier prices billed by the **actual timestamp of each call** (three historical eras: base / first peak schedule / V4.1 Flash repricing), cache hit/miss charged separately
 - Currency: CNY display by default (fixed rate 6.67, matching the official CNY prices); one-click switch to USD (4 decimals) in the expanded panel
 - Follows the GUI light/dark theme (`--dsw-*` tokens)
+- Front end prefers the official DSH UI primitives from the shell module table (`@deepseek-ai/dsh-client-ui-primitives`): `StateDot`, `Tag`, `Tooltip` and `useDismissOnOutsidePointer`; a shell whose module table lacks that package falls back to the built-in implementation, with no functional loss
 
 ## Peak windows (official basis)
 
@@ -87,7 +88,7 @@ dsh-tidewatch
 │   ├── index.js          # host: costUsage session projection (billed per event time)
 │   └── client.js         # browser: floating badge (__ModuleLoader__ bundle)
 ├── docs/PORTING.md       # adaptation notes for other hosts
-└── test/verify.mjs       # pure-module self-test (node test/verify.mjs, 38 checks)
+└── test/verify.mjs       # pure-module self-test (node test/verify.mjs, 39 checks)
 ```
 
 ## Data flow
@@ -106,7 +107,7 @@ model-call usage blocks (assistant/chunk, assistant/message events)
 
 ```sh
 DSH_CHECKOUT=<harness source root> bash scripts/build.sh   # syntax check + zod junction
-node test/verify.mjs                                       # peak math & billing self-test (38 checks, incl. dual-constant consistency)
+node test/verify.mjs                                       # peak math & billing self-test (39 checks, incl. dual-constant consistency)
 ```
 
 ## Known limitations

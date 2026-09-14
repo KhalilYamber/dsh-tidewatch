@@ -8,6 +8,7 @@
 - 计费：官方峰谷两档价格（美元口径；含 基础价 / 首版峰谷价 / V4.1 Flash 新价 三段历史档），按每次调用**实际发生时刻**的档位计价，缓存命中/未命中分开
 - 币种：默认人民币显示（固定汇率 6.67，与官方人民币标价一致），展开面板可一键切换美元（4 位小数）
 - 跟随 GUI 亮/暗主题（`--dsw-*` 变量）
+- 前端优先采用 DSH 官方 UI 原语（shell 共享模块表中的 `@deepseek-ai/dsh-client-ui-primitives`）：状态点 `StateDot`、标签 `Tag`、悬浮提示 `Tooltip`、外点关闭 `useDismissOnOutsidePointer`，观感与官方控件一致；老版 shell 的模块表若没有该包，自动降级到内置实现，功能不受影响
 
 ## 峰谷时段（官方依据）
 
@@ -89,7 +90,7 @@ dsh-tidewatch
 │   ├── index.js          # 宿主：costUsage 会话投影（按事件时刻计费）
 │   └── client.js         # 前端：悬浮徽章（__ModuleLoader__ bundle）
 ├── docs/PORTING.md       # 移植到其他宿主的适配说明
-└── test/verify.mjs       # 纯模块自检（node test/verify.mjs，38 项）
+└── test/verify.mjs       # 纯模块自检（node test/verify.mjs，39 项）
 ```
 
 ## 数据流
@@ -108,7 +109,7 @@ dsh-tidewatch
 
 ```sh
 DSH_CHECKOUT=<harness 源码根目录> bash scripts/build.sh   # 语法检查 + zod junction
-node test/verify.mjs                                       # 峰谷数学与计费自检（38 项，含双份常量一致性）
+node test/verify.mjs                                       # 峰谷数学与计费自检（39 项，含双份常量一致性）
 ```
 
 ## 已知限制
