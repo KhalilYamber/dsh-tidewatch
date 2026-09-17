@@ -47,8 +47,11 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
 - client：**两个插槽席位，职责不同**——
   - `conversation.composer.dock`（session 作用域）挂数据探针 `Probe`，渲染 null，
     只为拿到 `useProjection` 席位并把投影值写进模块级 bridge；
-  - `shell.overlay`（root 作用域）挂悬浮徽章 `TideCard`，从 bridge 读值渲染
-    （root 级插槽没有投影席位，这是需要两个组件的原因）。
+  - `shell.overlay`（root 作用域）挂徽章 `TideCard`，从 bridge 读值渲染
+    （root 级插槽没有投影席位，这是需要两个组件的原因）。`TideCard` 把折叠态
+    胶囊 portal 进官方统计行 `[data-composer-stats]`（ui-chat 的 StatsPills 根元素，
+    flex + gap 12px + 整体居中），与官方 pill 严格并列；展开面板宽度放不进行内，
+    portal 到 body 并锚定胶囊右缘上方。统计行不存在时回退为输入框右侧的浮动定位。
 - client 可选增强：优先 `require('@deepseek-ai/dsh-client-ui-primitives')`
   （shell 共享模块表中的 baseline 模块）取 `StateDot` / `Tag` / `Tooltip` /
   `useDismissOnOutsidePointer`，拿不到时自动退回内置实现。

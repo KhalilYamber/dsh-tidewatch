@@ -71,7 +71,7 @@ dsh plugin --profile web remove dsh-tidewatch    # uninstall
 
 ## Usage
 
-- The badge floats to the right of the composer, vertically centered with it; on narrow windows it moves above the composer instead, never covering the input area or the built-in stats line
+- The badge sits **inline in the official stats row below the composer**, right after the `cache hit xx%` pill (horizontal spacing and vertical alignment come from that row's own layout, so window resizing cannot misalign it); when the stats row is absent (older shell, or a session without token stats yet) it falls back to floating at the composer's right edge
 - Click the badge to expand/collapse the detail panel: windows, current tier prices, token breakdown, currency switch (¥ / $)
 - Click the "Session cost" row to expand the **per-model cost breakdown** (each model's tokens and cost listed separately; the total equals the sum of per-model costs)
 - Currency choice applies immediately and persists; CNY shows 2 decimals, USD 4 decimals
