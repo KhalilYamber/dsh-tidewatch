@@ -9,14 +9,17 @@
 
 | 导出 | 作用 |
 |---|---|
-| `isPeakHour(atMs)` | 某时刻是否峰时段（UTC 窗口；周末全天谷期） |
-| `peakPhaseAt(atMs)` | 当前相位 + 下一次切换点（倒计时数据源） |
+| `isPeakHour(atMs)` | 某时刻是否峰时段（UTC 窗口；周末与法定节假日全天谷期） |
+| `peakPhaseAt(atMs)` | 当前相位 + 下一次切换点（倒计时数据源；跳过周末/节假日，扫描范围前后各 14 天） |
+| `isAllDayOffPeak(atMs)` | 是否全天谷期（周末或法定节假日；节假日自 `HOLIDAY_RULE_BOUNDARY` 起生效） |
 | `tierFor(entry, atMs)` | 按时刻在三段价格时代中选档：基础价（legacyBase）/ 首版峰谷价（priorPeak、priorOffPeak）/ 现行峰谷价（peak、offPeak） |
 | `costOf(tokens, entry, atMs)` | 一次调用的美元成本 |
 | `priceEntryFor(model, atMs)` | 模型名归一化匹配 + 别名表（MODEL_ALIASES）→ 价目；未命中回退 default |
 | `DEFAULT_PEAK_WINDOWS` | 峰时段窗口（UTC 小时，半开区间） |
 | `DEFAULT_PRICE_TABLE` | 官方价目（改价只动这里） |
 | `MODEL_ALIASES` | 旧模型名 / 过渡期名称 → 现役模型 key |
+| `CN_PUBLIC_HOLIDAYS` | 中国法定节假日表（北京时间自然日；2027 年起需手动补新一年） |
+| `HOLIDAY_RULE_BOUNDARY` | 节假日「全天谷期」规则生效分界（此前仅周末全天谷期） |
 | `LEGACY_BASE_BOUNDARY` | 峰谷时代起点（此前按 legacyBase 计费） |
 | `FLASH_REPRICE_BOUNDARY` | V4.1 Flash 换价分界（此前用 prior 档） |
 | `V4_PRO_RETIRE_BOUNDARY` | V4 Pro 换价分界，现为哨兵值（官方声明计费方式不变） |
@@ -72,17 +75,17 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
 - **计费时刻**：用每次调用事件自带的时刻，不要用「当前时刻」回算历史调用，否则跨峰谷切换与跨调价时金额都会漂移
 - **缓存桶**：DeepSeek usage 的 `cacheReadTokens`/`cacheWriteTokens` 按命中价计费，别并进未命中输入桶
 - **半开区间**：窗口为 `[start, end)`，04:00:00 整点属于谷期
-- **周末规则**：2026-08-23 起周六/周日（UTC 自然日）全天谷期，切换点计算须跳过周末
+- **周末与节假日规则**：2026-08-23 起周六/周日（UTC 自然日）全天谷期；2026-09-19 核对的官方口径还包含法定节假日全天空闲。切换点计算须跳过这些整天；法定节假日按**北京时间自然日**判定（`beijingDateString`），连休最长 9 天（春节），切换点扫描范围已放宽到前后各 14 天
 - **改价**：官方调价后同步 `pricing.js`（计费）与 `client.js` 的 `DISPLAY_PRICES`（展示），
   并为被替换的旧价**补一段历史档**（`priorPeak` / `priorOffPeak` 的成例）；否则历史会话
   重放时会按新价计算，静默低估
 
-## 五、验证清单（node test/verify.mjs，39 项）
+## 五、验证清单（node test/verify.mjs，52 项）
 
-- 峰谷窗口边界（01:00 / 04:00 / 06:00 / 10:00 整点归属）与周末规则
-- 下一切换点计算（跨午夜窗口、周末 → 下周一）
+- 峰谷窗口边界（01:00 / 04:00 / 06:00 / 10:00 整点归属）、周末规则与法定节假日规则
+- 下一切换点计算（跨午夜窗口、周末 → 下周一、节假日 → 下一个工作日，含 7 天连休）
 - 三段价格时代（基础价 / 首版峰谷价 / 现行价）与换价分界前后一刻
 - 模型别名命中、未知模型回退 default
 - pro 换价分界哨兵值（当前不触发，pro 恒按自身价目）
 - 缓存读写按命中价计费、负 token 非负保护
-- 双份常量一致性（client 的 `PEAK_WINDOWS` / `DISPLAY_PRICES` / `MODEL_ALIASES` 与 pricing 对齐）
+- 双份常量一致性（client 的 `PEAK_WINDOWS` / `DISPLAY_PRICES` / `MODEL_ALIASES` / `CN_PUBLIC_HOLIDAYS` / 节假日规则分界 与 pricing 对齐）

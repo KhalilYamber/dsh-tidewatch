@@ -6,6 +6,7 @@
 - Collapsed: `● 峰期 距谷期 03:33 · ¥0.12` (peak, 03:33 to off-peak, ¥0.12)
 - Expanded (click to open): official peak windows (Beijing time), current tier prices, this session's token breakdown, exchange-rate setting
 - Billing: official peak/off-peak tier prices billed by the **actual timestamp of each call** (three historical eras: base / first peak schedule / V4.1 Flash repricing), cache hit/miss charged separately
+- Tier judgement: weekends **and Chinese public holidays** (built-in 2026 calendar) are billed at off-peak prices all day
 - Currency: CNY display by default (fixed rate 6.67, matching the official CNY prices); one-click switch to USD (4 decimals) in the expanded panel
 - Follows the GUI light/dark theme (`--dsw-*` tokens)
 - Front end prefers the official DSH UI primitives from the shell module table (`@deepseek-ai/dsh-client-ui-primitives`): `StateDot`, `Tag`, `Tooltip` and `useDismissOnOutsidePointer`; a shell whose module table lacks that package falls back to the built-in implementation, with no functional loss
@@ -23,7 +24,7 @@ DeepSeek introduced peak/off-peak time-of-day pricing on 2026-08-17:
 
 Off-peak prices are half of peak prices. The badge judges the current tier by the UTC windows (official definition); the table display uses Beijing time.
 
-**Weekend rule (since 2026-08-23)**: Saturdays and Sundays (UTC calendar days) are billed at off-peak prices all day, with no peak/off-peak switch; the next phase switch lands at the first peak window of the following Monday.
+**Weekend and public-holiday rule**: Saturdays and Sundays (UTC calendar days) are billed at off-peak prices all day (since 2026-08-23); Chinese public holidays are billed at off-peak prices all day with no peak/off-peak switch (official pricing-page footnote, verified 2026-09-19: “peak hours are Monday through Friday, **excluding Chinese public holidays** … all other hours are off-peak, including weekends and Chinese public holidays in full”), and the next phase switch lands at the first peak window of the next working day. The holiday table follows the State Council notice for 2026 (国办发明电〔2025〕7号, 33 days in total): New Year Jan 1–3, Spring Festival Feb 15–23, Qingming Apr 4–6, Labor Day May 1–5, Dragon Boat Jun 19–21, Mid-Autumn Sep 25–27, National Day Oct 1–7; make-up working weekends stay off-peak per the official “weekends in full” wording.
 
 ## Billing model
 
@@ -67,6 +68,8 @@ dsh plugin --profile web list dsh-tidewatch      # installed version
 dsh plugin --profile web remove dsh-tidewatch    # uninstall
 ```
 
+> **v1.1.6 holiday rule**: the official pricing-page footnote (verified 2026-09-19) states that peak hours are Monday through Friday, excluding Chinese public holidays, with weekends and public holidays off-peak in full. This release adds the 2026 Chinese public-holiday calendar (State Council notice) to tier judgement and billing: the upcoming Mid-Autumn Sep 25–27 and National Day Oct 1–7 are billed at off-peak rates all day. **Prices are unchanged from 1.1.5 (no official repricing this round)**; no stateVersion bump — no public holiday falls before the rule boundary (2026-09-19), so persisted sessions need no replay.
+>
 > **Upgrading to v1.1.1**: billing now selects the tier from three price eras by call timestamp, and the `costUsage` projection moved to stateVersion 4. Persisted sessions replay once after the upgrade, so calls made between 2026-08-16 and 2026-09-10 are restored to the **first** peak schedule (they were previously billed at the newer, lower rates). Live billing is unaffected.
 
 ## Usage
@@ -84,11 +87,11 @@ dsh-tidewatch
 ├── cordis.patch.yml      # bundle patch row
 ├── scripts/build.sh      # build: syntax check + zod junction
 ├── lib/
-│   ├── pricing.js        # pure functions: windows, isPeakHour/peakPhaseAt, three price eras, costOf
+│   ├── pricing.js        # pure functions: windows, isPeakHour/peakPhaseAt, three price eras, holiday table, costOf
 │   ├── index.js          # host: costUsage session projection (billed per event time)
-│   └── client.js         # browser: floating badge (__ModuleLoader__ bundle)
+│   └── client.js         # browser: badge (__ModuleLoader__ bundle)
 ├── docs/PORTING.md       # adaptation notes for other hosts
-└── test/verify.mjs       # pure-module self-test (node test/verify.mjs, 39 checks)
+└── test/verify.mjs       # pure-module self-test (node test/verify.mjs, 52 checks)
 ```
 
 ## Data flow
@@ -107,14 +110,14 @@ model-call usage blocks (assistant/chunk, assistant/message events)
 
 ```sh
 DSH_CHECKOUT=<harness source root> bash scripts/build.sh   # syntax check + zod junction
-node test/verify.mjs                                       # peak math & billing self-test (39 checks, incl. dual-constant consistency)
+node test/verify.mjs                                       # peak math & billing self-test (52 checks, incl. dual-constant consistency)
 ```
 
 ## Known limitations
 
 - Prices are built in, covering three eras (base price / first peak schedule / V4.1 Flash repricing); V4-Pro uses the official 2026-08-17 rates; per footnote (2) on the official pricing page and the changelog entry of 2026-09-10, V4 Pro keeps being served after 2026-09-14 **with its billing method unchanged** (further notice to follow if that changes), so pro is always billed on its own rates and `V4_PRO_RETIRE_BOUNDARY` stays a sentinel pending an official date. **When the official prices change, update both `lib/pricing.js` (billing) and the `DISPLAY_PRICES` constant in `lib/client.js` (display) manually, and keep the superseded tiers as another historical era**
 - Model names: `deepseek-flash` is current (V4.1 Flash); the aliases `deepseek-v4-flash`, `deepseek-v4-flash-vision-exp` and `deepseek-v4.1-flash` are all billed at the current flash rate (see `MODEL_ALIASES`)
-- Tier judgement is fixed to UTC (official definition); the window table displays Beijing time (UTC+8)
+- Tier judgement is fixed to UTC (official definition); the window table displays Beijing time (UTC+8); weekends and Chinese public holidays are off-peak all day — the holiday table covers 2026 (State Council notice), so **once the 2027 calendar is published you must sync `CN_PUBLIC_HOLIDAYS` by hand** (both `lib/pricing.js` and `lib/client.js`); make-up working weekends stay off-peak per the official wording
 - Cost is USD-ledger × fixed 6.67 rate for CNY (matching the official CNY prices); switchable to USD in the expanded panel
 
 ## Credits & license

@@ -1,17 +1,18 @@
 /**
  * dsh-tidewatch 纯模块验证（node test/verify.mjs）。
- * 所有时刻均为固定示例值，仅用于断言峰谷窗口与计费逻辑，与真实时钟无关。
- * 另含「双份常量一致性」校验：lib/client.js 的展示常量必须与 lib/pricing.js
- * 的计费常量一致，防止官方调价/改窗口时只改一处导致的静默漂移。
+ * 所有时刻均为固定示例值，仅用于断言峰谷窗口、节假日规则与计费逻辑，
+ * 与真实时钟无关。另含「双份常量一致性」校验：lib/client.js 的展示常量
+ * 必须与 lib/pricing.js 的计费常量一致，防止官方调价/改窗口/改节假日
+ * 表时只改一处导致的静默漂移。
  */
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
-  isPeakHour, peakPhaseAt, costOf, priceEntryFor,
+  isPeakHour, peakPhaseAt, costOf, priceEntryFor, isAllDayOffPeak,
   DEFAULT_PEAK_WINDOWS, DEFAULT_PRICE_TABLE, LEGACY_BASE_BOUNDARY, FLASH_REPRICE_BOUNDARY,
-  V4_PRO_RETIRE_BOUNDARY, MODEL_ALIASES,
+  V4_PRO_RETIRE_BOUNDARY, MODEL_ALIASES, CN_PUBLIC_HOLIDAYS, HOLIDAY_RULE_BOUNDARY,
 } from '../lib/pricing.js'
 
 const libDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'lib')
@@ -53,6 +54,12 @@ ok('client DISPLAY_PRICES 与 pricing DEFAULT_PRICE_TABLE 各档价格一致', (
 })
 ok('client MODEL_ALIASES 与 pricing MODEL_ALIASES 一致', () => {
   assert.deepEqual(extractClientConst('MODEL_ALIASES'), MODEL_ALIASES)
+})
+ok('client CN_PUBLIC_HOLIDAYS 与 pricing CN_PUBLIC_HOLIDAYS 一致', () => {
+  assert.deepEqual([...extractClientConst('CN_PUBLIC_HOLIDAYS')].sort(), [...CN_PUBLIC_HOLIDAYS].sort())
+})
+ok('client HOLIDAY_RULE_BOUNDARY_AT 与 pricing HOLIDAY_RULE_BOUNDARY 一致', () => {
+  assert.equal(extractClientConst('HOLIDAY_RULE_BOUNDARY_AT'), Date.parse(HOLIDAY_RULE_BOUNDARY))
 })
 
 // ── isPeakHour（UTC 峰时段 01:00-04:00 / 06:00-10:00）──
@@ -99,6 +106,49 @@ ok('周日整天相位：谷期，下一切换点 = 下周一 01:00 进入峰', 
   assert.equal(ph.inPeak, false)
   assert.equal(ph.nextAtMs, Date.parse('2026-08-24T01:00:00Z'))
   assert.equal(ph.nextIntoPeak, true)
+})
+
+// ── 法定节假日规则（官方定价页 2026-09-19 核对；国办发明电〔2025〕7号）──
+ok('国庆 2026-10-01（周四）峰窗时刻 → 谷期', () => {
+  assert.equal(isPeakHour(Date.parse('2026-10-01T07:00:00Z')), false)
+})
+ok('中秋 2026-09-25（周五）峰窗时刻 → 谷期', () => {
+  assert.equal(isPeakHour(Date.parse('2026-09-25T01:30:00Z')), false)
+})
+ok('规则分界前（2026-06-19 端午，周五）峰窗时刻仍按峰计（历史口径）', () => {
+  assert.equal(isPeakHour(Date.parse('2026-06-19T07:00:00Z')), true)
+})
+ok('规则分界前（2026-02-17 春节，周二）峰窗时刻仍按峰计（历史口径）', () => {
+  assert.equal(isPeakHour(Date.parse('2026-02-17T07:00:00Z')), true)
+})
+ok('调休上班日 2026-10-10（周六）仍为谷期（官方周末口径）', () => {
+  assert.equal(isPeakHour(Date.parse('2026-10-10T07:00:00Z')), false)
+})
+ok('北京日映射：UTC 2026-09-30 20:00 = 北京 10-01 05:00，全天谷期', () => {
+  assert.equal(isAllDayOffPeak(Date.parse('2026-09-30T20:00:00Z')), true)
+})
+ok('isAllDayOffPeak：节假日为真、普通工作日为假', () => {
+  assert.equal(isAllDayOffPeak(Date.parse('2026-10-01T07:00:00Z')), true)
+  assert.equal(isAllDayOffPeak(Date.parse('2026-10-08T07:00:00Z')), false)
+})
+ok('国庆首日相位：谷期，下一切换点 = 10-08（周四）01:00 进入峰（跨 7 天连休）', () => {
+  const ph = peakPhaseAt(Date.parse('2026-10-01T12:00:00Z'), DEFAULT_PEAK_WINDOWS)
+  assert.equal(ph.inPeak, false)
+  assert.equal(ph.nextAtMs, Date.parse('2026-10-08T01:00:00Z'))
+  assert.equal(ph.nextIntoPeak, true)
+})
+ok('中秋假期末相位（周日兼节假日）：谷期，下一切换点 = 9-28（周一）01:00 进入峰', () => {
+  const ph = peakPhaseAt(Date.parse('2026-09-27T20:00:00Z'), DEFAULT_PEAK_WINDOWS)
+  assert.equal(ph.inPeak, false)
+  assert.equal(ph.nextAtMs, Date.parse('2026-09-28T01:00:00Z'))
+  assert.equal(ph.nextIntoPeak, true)
+})
+ok('节假日表天数 = 33（2026 年官方放假总天数）', () => {
+  assert.equal(CN_PUBLIC_HOLIDAYS.size, 33)
+})
+ok('节假日峰窗时刻计费按谷价（国庆 10-01 → 0.75 USD）', () => {
+  const c = costOf({ input: 1e6, output: 1e6, cacheRead: 0, cacheWrite: 0 }, priceEntryFor('deepseek-flash'), Date.parse('2026-10-01T07:00:00Z'))
+  assert.ok(Math.abs(c - 0.75) < 1e-9)
 })
 
 // ── peakPhaseAt（当前相位 + 下一切换点）──
