@@ -115,6 +115,8 @@ DSH_CHECKOUT=<harness 源码根目录> bash scripts/build.sh   # 语法检查 + 
 node test/verify.mjs                                       # 峰谷数学与计费自检（52 项，含双份常量一致性）
 ```
 
+> Git Bash 下 `DSH_CHECKOUT` 需用 **Windows 形式**路径（如 `D:/DeepSeek-Harness/DSHAR工作目录/deepseek-harness-src`）：传 `/d/...` 会被 Node 解析成 `D:\d\...`，生成悬空 junction —— 插件是 link 安装，坏链接会在下次 `dsh web` 启动时导致插件装配失败（`Cannot find package 'zod'`）。脚本已在**替换链接之前**校验解析结果，坏路径当场报错且不留破坏。
+
 ## 已知限制
 
 - 价格表内置，含三段价格时代（基础价 / 首版峰谷价 / V4.1 Flash 新价）；V4-Pro 为官方 2026-08-17 价；官方定价页脚注(2)与更新日志（2026-09-10）声明 2026-09-14 之后继续提供 V4 Pro 服务、**计费方式保持不变**（如有变动另行通知），故 pro 恒按自身价目计费，换价分界 `V4_PRO_RETIRE_BOUNDARY` 保持哨兵值待官方通知。**官方调价后需手动同步** `lib/pricing.js`（计费）与 `lib/client.js` 的 `DISPLAY_PRICES`（展示）两处常量，并为旧价补一段历史档
