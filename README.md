@@ -68,6 +68,8 @@ dsh plugin --profile web list dsh-tidewatch      # 查看已安装版本
 dsh plugin --profile web remove dsh-tidewatch    # 卸载
 ```
 
+> **v1.1.7 适配 DSH 0.1.7-rc.2**：两处修正。① 计费事件源收敛到 `assistant/message`——旧代码还读 `assistant/chunk`，而该事件自会话格式 v3 起已被折叠（现行 agent loop 只发 `assistant/attempt`，其 payload 里没有 usage 字段），那条分支是永不触发的死代码，已删除；`costUsage` 投影 stateVersion 随之 4→5（折叠口径变了，历史会话重放一次）。② 会话归属判据重写——旧代码用 `props.useSessions(s => s.current)` 取当前会话，而壳层交给 root 插槽的 state 没有 `current` 字段，判据恒为 undefined，导致**卡片金额长期恒显示 ¥0.00**；现改由会话作用域的探针申报归属（它的 `sessionId` 即权威值），壳层只做「归属会话仍在列表里」的存活校验。失败/被重试的 `assistant/attempt` 仍不计费，与官方 token-meter 同口径——这是口径上限，不是遗漏。价格表与峰谷规则未动，实时计费金额不变。
+>
 > **v1.1.6 节假日规则**：官方定价页脚注（2026-09-19 核对）明确「高峰时段为周一至周五（不含中国法定节假日），周末及法定节假日全天空闲」。本版为峰谷判定与计费加入 2026 年法定节假日表（国办发明电〔2025〕7号）：即将生效的中秋 9/25–9/27、国庆 10/1–10/7 全天按谷期计价。**价格数字与 1.1.5 完全一致（官方本轮未调价）**；无 stateVersion 变更——节假日规则分界（2026-09-19）之前不存在受影响节假日，历史会话无需重放。
 >
 > **v1.1.2 计价修正**：官方定价页脚注(2)与更新日志（2026-09-10）已声明 —— 2026-09-14 之后继续提供 V4 Pro API 服务、**计费方式保持不变**，如有变动另行通知。此前版本依据新闻发布页的旧口径，把 `deepseek-v4-pro` 从 2026-09-14 04:00 UTC 起路由到 Flash 价，会**低估** pro 调用（缓存未命中约 4.4 倍、缓存命中约 7.3 倍、输出约 3.3 倍）。本版把换价分界 `V4_PRO_RETIRE_BOUNDARY` 恢复为哨兵值，pro 恒按自身价目计费；路由分支保留，将来接到官方通知把日期填回即可。影响仅限 pro 调用，flash 与其它模型不受影响；本次不改 stateVersion，历史会话无需重放。
@@ -93,13 +95,17 @@ dsh-tidewatch
 │   ├── index.js          # 宿主：costUsage 会话投影（按事件时刻计费）
 │   └── client.js         # 前端：悬浮徽章（__ModuleLoader__ bundle）
 ├── docs/PORTING.md       # 移植到其他宿主的适配说明
-└── test/verify.mjs       # 纯模块自检（node test/verify.mjs，52 项）
+├── test/
+│   ├── verify.mjs         # 全套自检入口（node test/verify.mjs）
+│   ├── client-fixture.mjs # 前端夹具：真实加载 lib/client.js 的假 React 环境
+│   ├── adapt-repro.mjs    # 宿主计费口径回归（真实投影折叠）
+│   └── ownership-repro.mjs # 前端归属判据回归（会话切换序列）
 ```
 
 ## 数据流
 
 ```
-模型调用 usage 块（assistant/chunk、assistant/message 事件）
+模型调用 usage 块（assistant/message 事件，DSH 0.1.7-rc.2 起唯一带 usage 的事件）
         │  lib/index.js：costUsage 会话投影（zod schema 校验）
         ▼
   token 桶 + 美元成本（按事件时刻峰谷档位）
@@ -112,7 +118,7 @@ dsh-tidewatch
 
 ```sh
 DSH_CHECKOUT=<harness 源码根目录> bash scripts/build.sh   # 语法检查 + zod junction
-node test/verify.mjs                                       # 峰谷数学与计费自检（52 项，含双份常量一致性）
+node test/verify.mjs                                       # 全套自检（峰谷数学、双份常量一致性、计费口径回归、归属判据回归）
 ```
 
 > Git Bash 下 `DSH_CHECKOUT` 需用 **Windows 形式**路径（如 `D:/DeepSeek-Harness/DSHAR工作目录/deepseek-harness-src`）：传 `/d/...` 会被 Node 解析成 `D:\d\...`，生成悬空 junction —— 插件是 link 安装，坏链接会在下次 `dsh web` 启动时导致插件装配失败（`Cannot find package 'zod'`）。脚本已在**替换链接之前**校验解析结果，坏路径当场报错且不留破坏。

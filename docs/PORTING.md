@@ -63,7 +63,7 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
 
 | DSH 概念 | 作用 | 移植替代 |
 |---|---|---|
-| `sessionProjections.register` | 会话级事件折叠（request/header、assistant/chunk usage） | 宿主自己的流式事件钩子 |
+| `sessionProjections.register` | 会话级事件折叠（request/header、assistant/message 的 usage） | 宿主自己的流式事件钩子 |
 | `useProjection('costUsage')` | 前端订阅投影视图 | 状态管理 / 订阅式 store |
 | `conversation.composer.dock` / `shell.overlay` 插槽 | 数据探针位 / 根级浮层位 | 输入区附近的容器节点 + 全局浮层 |
 | `@deepseek-ai/dsh-client-ui-primitives` | 官方共享 UI 原语（模块表 baseline） | 宿主自有控件库，或本插件的内置实现 |

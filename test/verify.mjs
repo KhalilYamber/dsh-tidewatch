@@ -1,9 +1,13 @@
 /**
- * dsh-tidewatch 纯模块验证（node test/verify.mjs）。
- * 所有时刻均为固定示例值，仅用于断言峰谷窗口、节假日规则与计费逻辑，
- * 与真实时钟无关。另含「双份常量一致性」校验：lib/client.js 的展示常量
- * 必须与 lib/pricing.js 的计费常量一致，防止官方调价/改窗口/改节假日
- * 表时只改一处导致的静默漂移。
+ * dsh-tidewatch 纯模块自检（node test/verify.mjs）。
+ *
+ * 三段：
+ *   ① 定价与峰谷数学（固定示例时刻，与真实时钟无关）；
+ *   ② 双份常量一致性（lib/client.js 的展示常量必须与 lib/pricing.js 的
+ *      计费常量一致，防官方调价/改窗口/改节假日表时只改一处造成的静默漂移）；
+ *   ③ 计费口径回归（DSH 0.1.7-rc.2 适配）：直接折叠**真实投影**，断言
+ *      「一次调用 = 恰好一笔费用」；并加载 lib/client.js，驱动会话切换序列，
+ *      断言金额归属与存活校验。
  */
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -14,6 +18,8 @@ import {
   DEFAULT_PEAK_WINDOWS, DEFAULT_PRICE_TABLE, LEGACY_BASE_BOUNDARY, FLASH_REPRICE_BOUNDARY,
   V4_PRO_RETIRE_BOUNDARY, MODEL_ALIASES, CN_PUBLIC_HOLIDAYS, HOLIDAY_RULE_BOUNDARY,
 } from '../lib/pricing.js'
+import { makeCostUsageProjection } from '../lib/index.js'
+import { runOwnershipChecks } from './client-fixture.mjs'
 
 const libDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'lib')
 
@@ -256,4 +262,90 @@ ok('非负保护：负 token 按 0 计', () => {
   assert.equal(c, 0)
 })
 
-console.log(`[dsh-tidewatch] verify: ${passed} passed`)
+// ── 计费口径回归（折叠真实投影；DSH 0.1.7-rc.2 适配）──────────────────────
+//
+// 现行 DSH 只在一个事件上携带 usage：assistant/message。（assistant/chunk
+// 自会话格式 v3 起被折叠，agent loop 只 append assistant/attempt，而其
+// payload 里没有 usage 字段。）这里断言「一次调用 = 恰好一笔费用」：
+// 已死的流式事件不进账、同一 (turn, step) 不翻倍、失败尝试不进账。
+
+const projection = makeCostUsageProjection()
+/** 计费时刻：UTC 2026-09-14 07:00 —— 周一、峰时段（06:00–10:00）、现行价时代。 */
+const AT = Date.parse('2026-09-14T07:00:00Z')
+const CALL_USAGE = {
+  inputTokens: 1_000_000,
+  outputTokens: 100_000,
+  cacheReadTokens: 2_000_000,
+  cacheWriteTokens: 0,
+  reasoningTokens: 50_000,
+  totalTokens: 3_150_000,
+}
+/**
+ * 峰时现行价（2026-09-10 04:00 UTC 起的 deepseek-flash 峰档）：
+ *   输入未命中 1M × 0.3 + 输出 0.1M × 0.6 + 缓存读 2M × 0.006 = 0.3 + 0.06 + 0.012 = 0.432 USD。
+ * 时刻选在 UTC 07:00（周一、峰时段窗口 06:00–10:00 内），故按峰档计。
+ */
+const CALL_COST = 0.432
+
+/** 把事件序列折进投影，返回其线上视图（wire view）。 */
+function projectCost(events) {
+  let state = projection.init({}, 0)
+  for (const event of events) state = projection.apply(state, event)
+  return projection.wire.view(state)
+}
+const requestHeader = {
+  type: 'request/header',
+  time: AT,
+  data: { header: { config: { provider: 'deepseek-official', model: 'deepseek-flash' } } },
+}
+const messageEvent = {
+  type: 'assistant/message',
+  time: AT,
+  data: { turn: 1, step: 1, message: { id: 'm1' }, usage: CALL_USAGE },
+}
+/** 已退出历史舞台的事件：会话格式 v2 的流式 usage 块。 */
+const legacyChunkEvent = {
+  type: 'assistant/chunk',
+  time: AT,
+  data: { turn: 1, step: 1, chunk: { type: 'usage', usage: CALL_USAGE } },
+}
+/** 现行 loop 的流式事件：payload 里没有 usage（失败/被重试的尝试走这里）。 */
+const attemptEvent = {
+  type: 'assistant/attempt',
+  time: AT,
+  data: { turn: 1, step: 1, stream: [{ index: 0, time: AT, chunk: { type: 'usage', usage: CALL_USAGE } }] },
+}
+
+ok('计费口径：assistant/message 的一次调用计费 = 0.432 USD，token 桶 310 万', () => {
+  const view = projectCost([requestHeader, messageEvent])
+  assert.ok(Math.abs(view.cost - CALL_COST) < 1e-9, `实得 ${view.cost}`)
+  assert.equal(view.input + view.output + view.cacheRead, 3_100_000)
+})
+ok('计费口径：已死的 assistant/chunk 不再进账（0 USD）', () => {
+  const view = projectCost([requestHeader, legacyChunkEvent])
+  assert.equal(view.cost, 0)
+  assert.equal(view.input + view.output + view.cacheRead, 0)
+})
+ok('计费口径：同一 (turn, step) 的流式 + 结算不翻倍（仍 0.432 USD）', () => {
+  const view = projectCost([requestHeader, legacyChunkEvent, messageEvent])
+  assert.ok(Math.abs(view.cost - CALL_COST) < 1e-9, `实得 ${view.cost}`)
+})
+ok('计费口径：现行的 assistant/attempt 不计费（与官方 token-meter 同口径）', () => {
+  const view = projectCost([requestHeader, attemptEvent])
+  assert.equal(view.cost, 0)
+})
+ok('计费口径：assistant/message 缺 usage 时不进账', () => {
+  const view = projectCost([requestHeader, { ...messageEvent, data: { turn: 1, step: 1, message: { id: 'm2' } } }])
+  assert.equal(view.cost, 0)
+})
+
+// ── 归属判据回归（加载真实 lib/client.js，驱动会话切换序列）──────────────
+const ownership = runOwnershipChecks()
+for (const [status, name] of ownership.results) {
+  if (status === 'PASS') passed += 1
+  console.log('  ' + (status === 'PASS' ? '✓' : '✗') + ' ' + name)
+}
+const ownershipFailures = ownership.results.filter(([status]) => status !== 'PASS')
+
+console.log(`[dsh-tidewatch] verify: ${passed} passed${ownershipFailures.length > 0 ? `，${ownershipFailures.length} failed` : ''}`)
+if (ownershipFailures.length > 0) process.exitCode = 1
