@@ -349,3 +349,8 @@ const ownershipFailures = ownership.results.filter(([status]) => status !== 'PAS
 
 console.log(`[dsh-tidewatch] verify: ${passed} passed${ownershipFailures.length > 0 ? `，${ownershipFailures.length} failed` : ''}`)
 if (ownershipFailures.length > 0) process.exitCode = 1
+
+
+// 断言执行完毕后显式退出：加载 lib/client.js 会在假环境里留下组件 effect 的定时器，
+// 没有这一步，`node test/verify.mjs` 会跑完却挂住（进程不退出）。
+process.exit(process.exitCode ?? 0)
