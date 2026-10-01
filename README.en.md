@@ -48,13 +48,15 @@ Off-peak prices are half of peak prices. The badge judges the current tier by th
 # Option 1: straight from GitHub (recommended, tracks main)
 dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 
-# Option 2: from a Release tarball (pinned version, works offline)
-#   download dsh-tidewatch-<version>.tgz from the Releases page, then:
-dsh plugin --profile web add ./dsh-tidewatch-1.1.1.tgz
-
-# Local directory (development)
+# Option 2: link a local checkout (source edits take effect immediately)
 dsh plugin --profile web add link:/path/to/dsh-tidewatch
+
+# Option 3: from a Release tarball (pinned version, works offline)
+#   download dsh-tidewatch-<version>.tgz from the Releases page (1.1.7 at present), then:
+dsh plugin --profile web add ./dsh-tidewatch-1.1.7.tgz
 ```
+
+> **Only the current tarball lives in this repository**: the historical builds (0.1.0 – 1.1.6) have been archived out of the tree, leaving `dsh-tidewatch-1.1.7.tgz`. Older builds carry the billing defect that pinned the card cost at ¥0.00 — do not install them.
 
 > **The npm channel is paused**: npm hosts only an old copy (1.0.6, published 2026-08-22) whose prices and rules are outdated. Do not install it or judge current billing from it — use the two options above.
 

@@ -48,13 +48,15 @@ DeepSeek 官方自 2026-08-17 起实施峰谷分时定价：
 # 方式一：从 GitHub 直装（推荐，跟随 main 最新）
 dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 
-# 方式二：从 Release 的 tgz 安装（可固定版本、可离线）
-#   先到 Releases 页面下载 dsh-tidewatch-<版本>.tgz，然后：
-dsh plugin --profile web add ./dsh-tidewatch-1.1.1.tgz
-
-# 本地目录（开发调试）
+# 方式二：链接本地仓库目录（改完源码即时生效，开发时最省事）
 dsh plugin --profile web add link:/path/to/dsh-tidewatch
+
+# 方式三：从 Release 的 tgz 安装（可固定版本、可离线）
+#   先到 Releases 页面下载 dsh-tidewatch-<版本>.tgz（当前为 1.1.7），然后：
+dsh plugin --profile web add ./dsh-tidewatch-1.1.7.tgz
 ```
+
+> **本仓库只保留当前版本的 tgz**：历史版本（0.1.0 ~ 1.1.6）已归档移出仓库，只剩 `dsh-tidewatch-1.1.7.tgz`。旧版多含已修正的计价缺陷（金额恒显示 ¥0.00），不要再用它们安装。
 
 > **npm 渠道已暂停**：npm 上仅有一个 2026-08-22 发布的旧版本（1.0.6），其价格与规则均已过时。请勿安装该版本，也不要据它判断当前计价——以上面两种方式为准。
 
