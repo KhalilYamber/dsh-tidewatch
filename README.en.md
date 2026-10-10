@@ -6,8 +6,8 @@
 - Collapsed: `● 峰期 距谷期 03:33 · ¥0.12` (peak, 03:33 to off-peak, ¥0.12)
 - Expanded (click to open): official peak windows (Beijing time), current tier prices, this session's token breakdown, exchange-rate setting
 - Billing: official peak/off-peak tier prices billed by the **actual timestamp of each call** (three historical eras: base / first peak schedule / V4.1 Flash repricing), cache hit/miss charged separately
-- Tier judgement: weekends **and Chinese public holidays** (built-in 2026 calendar) are billed at off-peak prices all day
-- Currency: CNY display by default (fixed rate 6.67, matching the official CNY prices); one-click switch to USD (4 decimals) in the expanded panel
+- Tier judgement: weekends, **Chinese public holidays** (built-in 2026 calendar) and the make-up working weekends are billed at off-peak prices all day
+- Currency: CNY display by default (taken verbatim from the official Chinese pricing page); one-click switch to USD (official English-page figures, 4 decimals) in the expanded panel
 - Follows the GUI light/dark theme (`--dsw-*` tokens)
 - Front end prefers the official DSH UI primitives from the shell module table (`@deepseek-ai/dsh-client-ui-primitives`): `StateDot`, `Tag`, `Tooltip` and `useDismissOnOutsidePointer`; a shell whose module table lacks that package falls back to the built-in implementation, with no functional loss
 
@@ -22,9 +22,9 @@ DeepSeek introduced peak/off-peak time-of-day pricing on 2026-08-17:
 | 06:00 – 10:00 | 14:00 – 18:00 | peak |
 | 10:00 – next 01:00 | 18:00 – next 09:00 | off-peak |
 
-Off-peak prices are half of peak prices. The badge judges the current tier by the UTC windows (official definition); the table display uses Beijing time.
+Off-peak prices are half of peak prices. The badge judges window position by the UTC hours (the official English page states them in UTC), while the weekday and public-holiday test uses Beijing calendar days (the official Chinese page anchors weekdays to Beijing time). The two readings are equivalent for the current windows: each window falls inside a single Beijing calendar day and the pair does not straddle a UTC day boundary. The table display always uses Beijing time.
 
-**Weekend and public-holiday rule**: Saturdays and Sundays (UTC calendar days) are billed at off-peak prices all day (since 2026-08-23); Chinese public holidays are billed at off-peak prices all day with no peak/off-peak switch (official pricing-page footnote, verified 2026-09-19: “peak hours are Monday through Friday, **excluding Chinese public holidays** … all other hours are off-peak, including weekends and Chinese public holidays in full”), and the next phase switch lands at the first peak window of the next working day. The holiday table follows the State Council notice for 2026 (国办发明电〔2025〕7号, 33 days in total): New Year Jan 1–3, Spring Festival Feb 15–23, Qingming Apr 4–6, Labor Day May 1–5, Dragon Boat Jun 19–21, Mid-Autumn Sep 25–27, National Day Oct 1–7; make-up working weekends stay off-peak per the official “weekends in full” wording.
+**Weekend and public-holiday rule**: Saturdays and Sundays are billed at off-peak prices all day (since 2026-08-23 00:00 Beijing time); Chinese public holidays are billed at off-peak prices all day with no peak/off-peak switch (official pricing-page footnote, verified 2026-10-10: “peak hours are Monday through Friday, **excluding Chinese public holidays** … all other hours are off-peak, including weekends and Chinese public holidays in full”); make-up working weekends are off-peak all day as well (official statement of 2026-09-19: make-up working weekends and Chinese public holidays are billed at off-peak rates in full). The next phase switch lands at the first peak window of the next working day. The holiday table follows the State Council notice for 2026 (国办发明电〔2025〕7号, 33 days in total): New Year Jan 1–3, Spring Festival Feb 15–23, Qingming Apr 4–6, Labor Day May 1–5, Dragon Boat Jun 19–21, Mid-Autumn Sep 25–27, National Day Oct 1–7.
 
 ## Billing model
 
@@ -38,7 +38,7 @@ Off-peak prices are half of peak prices. The badge judges the current tier by th
   | V4.1 Flash repricing | from 2026-09-10 04:00 | peak 0.006 / 0.3 / 1.2, off-peak is half |
 
 - Each call is billed at the tier of its **event timestamp**, so costs do not drift across a peak/off-peak switch or a repricing
-- The ledger stores USD; display converts via the fixed 6.67 rate to CNY (default) or shows USD directly
+- The ledger stores USD; CNY display takes the official Chinese-page figures verbatim (default) and USD display takes the official English-page figures (4 decimals) — no cross-rate conversion
 
 ## Install
 
@@ -52,11 +52,11 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 dsh plugin --profile web add link:/path/to/dsh-tidewatch
 
 # Option 3: from a Release tarball (pinned version, works offline)
-#   download dsh-tidewatch-<version>.tgz from the Releases page (1.1.7 at present), then:
-dsh plugin --profile web add ./dsh-tidewatch-1.1.7.tgz
+#   download dsh-tidewatch-<version>.tgz from the Releases page (1.1.8 at present), then:
+dsh plugin --profile web add ./dsh-tidewatch-1.1.8.tgz
 ```
 
-> **Only the current tarball lives in this repository**: the historical builds (0.1.0 – 1.1.6) have been archived out of the tree, leaving `dsh-tidewatch-1.1.7.tgz`. Older builds carry the billing defect that pinned the card cost at ¥0.00 — do not install them.
+> **Only the current tarball lives in this repository**: the historical builds (0.1.0 – 1.1.7) have been archived out of the tree, leaving `dsh-tidewatch-1.1.8.tgz`. Older builds carry the billing defect that pinned the card cost at ¥0.00 — do not install them.
 
 > **The npm channel is paused**: npm hosts only an old copy (1.0.6, published 2026-08-22) whose prices and rules are outdated. Do not install it or judge current billing from it — use the two options above.
 
@@ -70,6 +70,8 @@ dsh plugin --profile web list dsh-tidewatch      # installed version
 dsh plugin --profile web remove dsh-tidewatch    # uninstall
 ```
 
+> **v1.1.8 tier-definition refresh**: re-verified the peak/off-peak definition against the official pages (Chinese page, English page and changelog, checked 2026-10-10) and landed three fixes. ① The official basis is now spelled out: the Chinese page anchors weekdays to Beijing time while the English page writes the windows in UTC, and for the current windows (UTC 01:00–04:00 / 06:00–10:00) the two readings are equivalent — each window sits inside one Beijing calendar day and the pair does not straddle a UTC day boundary. The weekday test therefore reads Beijing calendar days (it previously read the UTC weekday; the numbers happen to agree, so behaviour is unchanged — see the Beijing-boundary assertions in the self-check). ② The make-up working weekend rule is now stated in comments and in the panel copy (official statement of 2026-09-19: make-up working weekends and Chinese public holidays are billed off-peak in full), so a make-up working weekend stays off-peak all day rather than becoming a working day. ③ CNY display now takes the official Chinese-page figures verbatim: the two models carry different implied rates (flash ≈ 6.67, pro ≈ 6.82) and the previous single 6.67 rate understated pro by roughly 2% in CNY. **Billing math still uses the exact USD figures, historical bills are not recomputed**, and the projection stateVersion is unchanged, so no session replay on upgrade.
+>
 > **v1.1.6 holiday rule**: the official pricing-page footnote (verified 2026-09-19) states that peak hours are Monday through Friday, excluding Chinese public holidays, with weekends and public holidays off-peak in full. This release adds the 2026 Chinese public-holiday calendar (State Council notice) to tier judgement and billing: the upcoming Mid-Autumn Sep 25–27 and National Day Oct 1–7 are billed at off-peak rates all day. **Prices are unchanged from 1.1.5 (no official repricing this round)**; no stateVersion bump — no public holiday falls before the rule boundary (2026-09-19), so persisted sessions need no replay.
 >
 > **Upgrading to v1.1.1**: billing now selects the tier from three price eras by call timestamp, and the `costUsage` projection moved to stateVersion 4. Persisted sessions replay once after the upgrade, so calls made between 2026-08-16 and 2026-09-10 are restored to the **first** peak schedule (they were previously billed at the newer, lower rates). Live billing is unaffected.
@@ -119,8 +121,8 @@ node test/verify.mjs                                       # peak math & billing
 
 - Prices are built in, covering three eras (base price / first peak schedule / V4.1 Flash repricing); V4-Pro uses the official 2026-08-17 rates; per footnote (2) on the official pricing page and the changelog entry of 2026-09-10, V4 Pro keeps being served after 2026-09-14 **with its billing method unchanged** (further notice to follow if that changes), so pro is always billed on its own rates and `V4_PRO_RETIRE_BOUNDARY` stays a sentinel pending an official date. **When the official prices change, update both `lib/pricing.js` (billing) and the `DISPLAY_PRICES` constant in `lib/client.js` (display) manually, and keep the superseded tiers as another historical era**
 - Model names: `deepseek-flash` is current (V4.1 Flash); the aliases `deepseek-v4-flash`, `deepseek-v4-flash-vision-exp` and `deepseek-v4.1-flash` are all billed at the current flash rate (see `MODEL_ALIASES`)
-- Tier judgement is fixed to UTC (official definition); the window table displays Beijing time (UTC+8); weekends and Chinese public holidays are off-peak all day — the holiday table covers 2026 (State Council notice), so **once the 2027 calendar is published you must sync `CN_PUBLIC_HOLIDAYS` by hand** (both `lib/pricing.js` and `lib/client.js`); make-up working weekends stay off-peak per the official wording
-- Cost is USD-ledger × fixed 6.67 rate for CNY (matching the official CNY prices); switchable to USD in the expanded panel
+- Windows are read as UTC hours (the official English page states them that way); the weekday and holiday test reads Beijing calendar days (UTC+8), equivalent for the current windows; weekends, Chinese public holidays and make-up working weekends are off-peak all day — the holiday table covers 2026 (State Council notice), so **once the 2027 calendar is published you must sync `CN_PUBLIC_HOLIDAYS` by hand** (both `lib/pricing.js` and `lib/client.js`)
+- Costs are computed in USD; CNY display uses the official Chinese-page figures and USD display the official English-page figures, with no cross-rate conversion
 
 ## Credits & license
 

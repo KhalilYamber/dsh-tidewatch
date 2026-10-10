@@ -17,6 +17,7 @@ import {
   isPeakHour, peakPhaseAt, costOf, priceEntryFor, isAllDayOffPeak,
   DEFAULT_PEAK_WINDOWS, DEFAULT_PRICE_TABLE, LEGACY_BASE_BOUNDARY, FLASH_REPRICE_BOUNDARY,
   V4_PRO_RETIRE_BOUNDARY, MODEL_ALIASES, CN_PUBLIC_HOLIDAYS, HOLIDAY_RULE_BOUNDARY,
+  BEIJING_OFFSET_MS,
 } from '../lib/pricing.js'
 import { makeCostUsageProjection } from '../lib/index.js'
 import { runOwnershipChecks } from './client-fixture.mjs'
@@ -67,6 +68,31 @@ ok('client CN_PUBLIC_HOLIDAYS 与 pricing CN_PUBLIC_HOLIDAYS 一致', () => {
 ok('client HOLIDAY_RULE_BOUNDARY_AT 与 pricing HOLIDAY_RULE_BOUNDARY 一致', () => {
   assert.equal(extractClientConst('HOLIDAY_RULE_BOUNDARY_AT'), Date.parse(HOLIDAY_RULE_BOUNDARY))
 })
+ok('client BEIJING_OFFSET_MS 与 pricing BEIJING_OFFSET_MS 一致', () => {
+  assert.equal(extractClientConst('BEIJING_OFFSET_MS'), BEIJING_OFFSET_MS)
+})
+ok('北京偏移 = UTC+8（无夏令时）', () => {
+  assert.equal(BEIJING_OFFSET_MS, 8 * 3600 * 1000)
+})
+ok('client DISPLAY_PRICES 的 rmb 与 pricing 条目的 rmb 一致（官方中文页数字）', () => {
+  const display = extractClientConst('DISPLAY_PRICES')
+  const billing = DEFAULT_PRICE_TABLE.models
+  for (const [id, entry] of Object.entries(display)) {
+    const model = Object.keys(billing).find(k => k.includes(id) || id.includes(k))
+    assert.ok(model !== undefined, `client 价格表出现 pricing 没有的模型 ${id}`)
+    assert.deepEqual(entry.rmb, billing[model].rmb, `模型 ${id} 的人民币数字不一致`)
+  }
+})
+ok('人民币数字与官方中文页一致（flash 谷 0.02/1/4、峰 0.04/2/8）', () => {
+  const rmb = DEFAULT_PRICE_TABLE.models['deepseek-flash'].rmb
+  assert.deepEqual(rmb.offPeak, { cacheHit: 0.02, cacheMiss: 1, output: 4 })
+  assert.deepEqual(rmb.peak, { cacheHit: 0.04, cacheMiss: 2, output: 8 })
+})
+ok('人民币数字与官方中文页一致（pro 谷 0.15/4.5/13.5、峰 0.3/9/27）', () => {
+  const rmb = DEFAULT_PRICE_TABLE.models['deepseek-v4-pro'].rmb
+  assert.deepEqual(rmb.offPeak, { cacheHit: 0.15, cacheMiss: 4.5, output: 13.5 })
+  assert.deepEqual(rmb.peak, { cacheHit: 0.3, cacheMiss: 9, output: 27 })
+})
 
 // ── isPeakHour（UTC 峰时段 01:00-04:00 / 06:00-10:00）──
 ok('UTC 07:00 在峰时段（06:00-10:00）', () => {
@@ -88,7 +114,7 @@ ok('UTC 04:00 不在峰时段（半开区间端点）', () => {
   assert.equal(isPeakHour(Date.parse('2026-08-19T04:00:00Z')), false)
 })
 
-// ── 周末规则（官方 2026-08-23 起：周六/周日 UTC 全天谷期）──
+// ── 周末规则（官方 2026-08-23 00:00 北京起：周六/周日全天谷期；周几按北京自然日）──
 ok('周六 07:00 UTC（工作日是峰时）→ 谷期', () => {
   assert.equal(isPeakHour(Date.parse('2026-08-22T07:00:00Z')), false)
 })
@@ -129,6 +155,32 @@ ok('规则分界前（2026-02-17 春节，周二）峰窗时刻仍按峰计（�
 })
 ok('调休上班日 2026-10-10（周六）仍为谷期（官方周末口径）', () => {
   assert.equal(isPeakHour(Date.parse('2026-10-10T07:00:00Z')), false)
+})
+ok('调休上班日 2026-09-20（周日）整点全段仍为谷期（官方周末口径）', () => {
+  for (let h = 0; h < 24; h += 1) {
+    assert.equal(isPeakHour(Date.parse('2026-09-20T' + String(h).padStart(2, '0') + ':00:00Z')), false, 'UTC ' + h + ':00 应为谷期')
+  }
+})
+// 周几按北京自然日：日界两侧各取一刻，验证判定归属的是北京那一天。
+// 北京周一 09:00 = 北京周一的峰时首刻；北京周日 23:00 与次日北京周一 00:30
+// 均为谷期（前者是周末、后者未进窗口），两者都不依赖 UTC 星期。
+ok('北京周一 09:00（UTC 周一 01:00）进入峰时', () => {
+  assert.equal(isPeakHour(Date.parse('2026-10-12T01:00:00Z')), true)
+})
+ok('北京周一 08:59（UTC 周一 00:59）仍为谷期（窗口外）', () => {
+  assert.equal(isPeakHour(Date.parse('2026-10-12T00:59:00Z')), false)
+})
+ok('北京周日 09:00（UTC 周日 01:00）为谷期（周末，尽管落在窗口内）', () => {
+  assert.equal(isPeakHour(Date.parse('2026-10-11T01:00:00Z')), false)
+})
+ok('北京周六 14:00（UTC 周六 06:00）为谷期（周末，尽管落在窗口内）', () => {
+  assert.equal(isPeakHour(Date.parse('2026-10-10T06:00:00Z')), false)
+})
+ok('北京周五 18:00（UTC 周五 10:00）退出峰时（半开区间端点）', () => {
+  assert.equal(isPeakHour(Date.parse('2026-10-09T10:00:00Z')), false)
+})
+ok('北京周二 14:00（UTC 周二 06:00）为峰时（工作日下午窗口）', () => {
+  assert.equal(isPeakHour(Date.parse('2026-10-13T06:00:00Z')), true)
 })
 ok('北京日映射：UTC 2026-09-30 20:00 = 北京 10-01 05:00，全天谷期', () => {
   assert.equal(isAllDayOffPeak(Date.parse('2026-09-30T20:00:00Z')), true)
