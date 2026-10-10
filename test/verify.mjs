@@ -16,8 +16,7 @@ import { fileURLToPath } from 'node:url'
 import {
   isPeakHour, peakPhaseAt, costOf, priceEntryFor, isAllDayOffPeak,
   DEFAULT_PEAK_WINDOWS, DEFAULT_PRICE_TABLE, LEGACY_BASE_BOUNDARY, FLASH_REPRICE_BOUNDARY,
-  V4_PRO_RETIRE_BOUNDARY, MODEL_ALIASES, CN_PUBLIC_HOLIDAYS, HOLIDAY_RULE_BOUNDARY,
-  BEIJING_OFFSET_MS,
+  V4_PRO_RETIRE_BOUNDARY, MODEL_ALIASES, CN_PUBLIC_HOLIDAYS, BEIJING_OFFSET_MS,
 } from '../lib/pricing.js'
 import { makeCostUsageProjection } from '../lib/index.js'
 import { runOwnershipChecks } from './client-fixture.mjs'
@@ -64,9 +63,6 @@ ok('client MODEL_ALIASES 与 pricing MODEL_ALIASES 一致', () => {
 })
 ok('client CN_PUBLIC_HOLIDAYS 与 pricing CN_PUBLIC_HOLIDAYS 一致', () => {
   assert.deepEqual([...extractClientConst('CN_PUBLIC_HOLIDAYS')].sort(), [...CN_PUBLIC_HOLIDAYS].sort())
-})
-ok('client HOLIDAY_RULE_BOUNDARY_AT 与 pricing HOLIDAY_RULE_BOUNDARY 一致', () => {
-  assert.equal(extractClientConst('HOLIDAY_RULE_BOUNDARY_AT'), Date.parse(HOLIDAY_RULE_BOUNDARY))
 })
 ok('client BEIJING_OFFSET_MS 与 pricing BEIJING_OFFSET_MS 一致', () => {
   assert.equal(extractClientConst('BEIJING_OFFSET_MS'), BEIJING_OFFSET_MS)
@@ -147,11 +143,20 @@ ok('国庆 2026-10-01（周四）峰窗时刻 → 谷期', () => {
 ok('中秋 2026-09-25（周五）峰窗时刻 → 谷期', () => {
   assert.equal(isPeakHour(Date.parse('2026-09-25T01:30:00Z')), false)
 })
-ok('规则分界前（2026-06-19 端午，周五）峰窗时刻仍按峰计（历史口径）', () => {
-  assert.equal(isPeakHour(Date.parse('2026-06-19T07:00:00Z')), true)
+ok('无生效分界：2026-06-19（端午，周五）峰窗时刻按谷计——节假日口径无条件适用', () => {
+  assert.equal(isPeakHour(Date.parse('2026-06-19T07:00:00Z')), false)
 })
-ok('规则分界前（2026-02-17 春节，周二）峰窗时刻仍按峰计（历史口径）', () => {
-  assert.equal(isPeakHour(Date.parse('2026-02-17T07:00:00Z')), true)
+ok('无生效分界：2026-02-17（春节，周二）峰窗时刻按谷计——节假日口径无条件适用', () => {
+  assert.equal(isPeakHour(Date.parse('2026-02-17T07:00:00Z')), false)
+})
+ok('无生效分界：2026-01-01（元旦，周四）峰窗时刻按谷计', () => {
+  assert.equal(isPeakHour(Date.parse('2026-01-01T07:00:00Z')), false)
+})
+ok('节假日全天空闲：2026-05-01（劳动节，周五）任意钟点均为谷', () => {
+  for (let h = 0; h < 24; h += 1) {
+    const at = Date.parse('2026-05-01T' + String(h).padStart(2, '0') + ':00:00Z')
+    assert.equal(isPeakHour(at), false, 'UTC ' + h + ':00 应为谷')
+  }
 })
 ok('调休上班日 2026-10-10（周六）仍为谷期（官方周末口径）', () => {
   assert.equal(isPeakHour(Date.parse('2026-10-10T07:00:00Z')), false)
