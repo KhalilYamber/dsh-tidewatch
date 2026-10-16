@@ -58,6 +58,12 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
 - client 可选增强：优先 `require('@deepseek-ai/dsh-client-ui-primitives')`
   （shell 共享模块表中的 baseline 模块）取 `StateDot` / `Tag` / `Tooltip` /
   `useDismissOnOutsidePointer`，拿不到时自动退回内置实现。
+- client 余额：`ctx.remote.account.getBalance({ version, locale, timezoneOffsetSeconds })`，
+  返回 `{ ok, value }`；value 为 null（未登录）、`{ status:'ready', value:[充值钱包],
+  bonusWallets:[礼金钱包] }` 或 `{ status:'failed' }`，钱包是 `{ currency, balance }`。
+  充值余额与礼金互不重叠，相加才是钱包总额（官网口径）。宿主对账号查询带缓存，
+  失效条件是「凭证变化或销毁」而非「有事件」，所以监听事件重查拿不到新值：本插件按
+  30 秒轮询（页面不可见时降频），并把读数时刻如实显示在面板里。
 
 ## 三、DSH 特有接口速查（其他宿主请替换）
 
@@ -67,6 +73,7 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
 | `useProjection('costUsage')` | 前端订阅投影视图 | 状态管理 / 订阅式 store |
 | `conversation.composer.dock` / `shell.overlay` 插槽 | 数据探针位 / 根级浮层位 | 输入区附近的容器节点 + 全局浮层 |
 | `@deepseek-ai/dsh-client-ui-primitives` | 官方共享 UI 原语（模块表 baseline） | 宿主自有控件库，或本插件的内置实现 |
+| `ctx.remote.account.getBalance` | 读取账户余额（充值 / 礼金 / 合计），**查询由宿主执行** | 宿主自有账户接口，或自行调用官方 `/user/balance`（此时密钥要自己管） |
 | `--dsw-*` CSS 变量 | 主题跟随 | 宿主主题变量或硬编码双主题 |
 
 ## 四、注意事项

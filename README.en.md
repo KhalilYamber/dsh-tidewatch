@@ -4,12 +4,13 @@
 
 - Status dot: **orange/red for peak, teal/green for off-peak**, readable at a glance
 - Collapsed: `● 峰期 距谷期 03:33 · ¥0.12` (peak, 03:33 to off-peak, ¥0.12)
-- Expanded (click to open): official peak windows (Beijing time), current tier prices, this session's token breakdown, exchange-rate setting
+- Expanded (click to open): official peak windows (Beijing time), current tier prices, this session's token breakdown, **DeepSeek account balance**, currency switch
 - Billing: official peak/off-peak tier prices billed by the **actual timestamp of each call** (three historical eras: base / first peak schedule / V4.1 Flash repricing), cache hit/miss charged separately
 - Tier judgement: weekends, **Chinese public holidays** (built-in 2026 calendar) and the make-up working weekends are billed at off-peak prices all day
 - Currency: CNY display by default (taken verbatim from the official Chinese pricing page); one-click switch to USD (official English-page figures, 4 decimals) in the expanded panel
 - Follows the GUI light/dark theme (`--dsw-*` tokens)
 - Front end prefers the official DSH UI primitives from the shell module table (`@deepseek-ai/dsh-client-ui-primitives`): `StateDot`, `Tag`, `Tooltip` and `useDismissOnOutsidePointer`; a shell whose module table lacks that package falls back to the built-in implementation, with no functional loss
+- Account balance: read through the DSH account service (`ctx.remote.account.getBalance`), showing **paid / bonus / total** plus the reading time; the host performs the query, and the plugin never touches API keys, issues no HTTP request of its own, and persists nothing
 
 ## Peak windows (official basis)
 
