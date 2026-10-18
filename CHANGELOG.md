@@ -2,6 +2,16 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
 
+## [1.9.1] - 2026-10-18
+
+### 修复
+
+- **拖拽手感**（三个问题）：
+  - `pointermove` / `pointerup` 原本只绑在挂件自身，鼠标一移出那 92px 区域就断拖；现改挂到 `window`，鼠标跑多远都跟手（仍然不用 `setPointerCapture`，它会改掉之后 click 的 target）
+  - 挂件带着 `transition: left/top .18s` 的位移动画，拖动时每帧都被过渡拖慢；拖动期间加 `tw-dragging` 关掉过渡
+  - 吸附不看距离，中心过中线就被拽到边上；改为只有距左右边缘 48px 内才吸附，中间松手就停在原地
+- 拖动时指针显示 `grabbing`、立绘轻微放大，给出拖拽中的反馈
+
 ## [1.9.0] - 2026-10-18
 
 ### 变更
