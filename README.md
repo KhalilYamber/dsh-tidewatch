@@ -23,7 +23,8 @@ DeepSeek 自 2026-08-17 起对 API 实行峰谷分时定价：峰期价目是谷
 | **挂件** | 右下角常驻立绘，可拖拽，松手吸附到较近的一侧，位置持久化；峰期与谷期换不同立绘 |
 | **气泡** | 点立绘弹出漫画式对话气泡（大圆角 + 指向头顶的尖角），几秒后自动收起；**点气泡翻页**，第 1 页看峰谷与余额，第 2 页看本次会话开销 |
 | **交互** | 点立绘出气泡、点气泡翻页；完整面板从气泡的「详情 ›」进入；面板右上角 `✕` 或点外部收起 |
-| **编辑器** | 面板内置气泡编辑器：增删页与行、改模板文案、**拖拽排序**（也可以点 ↑↓）、一键恢复默认 |
+| **编辑器** | 面板内置气泡编辑器：增删页与行、改模板文案、**拖拽排序**（也可点 ↑↓）、**模块库**（☆ 收藏常用行，一键插入）、一键恢复默认 |
+| **泡泡玩法** | 一行内用 `A \|\| B` 并列随机、写成 `img:https://…` 渲染成图片（在线图与 data URI 均可） |
 | **观感** | 跟随 GUI 亮暗主题（`--dsw-*` 变量）；复用 DSH 官方 UI 原语；合成提示音（无音频素材） |
 | **不适用时** | 换成非 DeepSeek 模型时显示「不适用」，不拿 Flash 价硬凑数字 |
 
@@ -46,7 +47,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 到 [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases) 下载最新的 `dsh-tidewatch-<版本>.tgz`，然后：
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.10.2.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.11.0.tgz
 ```
 
 ### 本地链接安装（改源码即时生效）
@@ -168,7 +169,7 @@ dsh-tidewatch
 # 构建（语法检查 + zod 依赖 junction）
 DSH_CHECKOUT=<harness 源码根目录> bash scripts/build.sh
 
-# 全套自检（88 项）：峰谷数学、双份常量一致性、计费口径回归、挂件钳位、归属判据回归
+# 全套自检（91 项）：峰谷数学、双份常量一致性、计费口径回归、挂件钳位、随机并列、归属判据回归
 node test/verify.mjs
 
 # 布局冒烟测试：用真实样式表在无头 Chrome 里渲染挂件/泡泡/面板并断言布局
@@ -197,7 +198,7 @@ node test/ui-smoke.mjs
 
 ## 版本说明
 
-历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.10.2**。
+历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.11.0**。
 
 ## 许可
 

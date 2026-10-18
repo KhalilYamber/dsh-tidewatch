@@ -458,6 +458,7 @@ ok('客户端上报的版本号与 package.json 一致', () => {
   const { testables } = loadClientPlugin()
   const clamp = testables.clampToViewport
   const fill = testables.fillTemplate
+  const pickVariant = testables.pickVariant
 
   ok('钳位：窗口变小后右下角坐标被拉回视口内', () => {
     const r = clamp({ left: 1700, top: 900 }, { width: 1200, height: 800 }, { width: 92, height: 92 })
@@ -480,6 +481,24 @@ ok('客户端上报的版本号与 package.json 一致', () => {
     const r = clamp({ left: 500, top: 500 }, { width: 60, height: 60 }, { width: 92, height: 92 })
     assert.equal(r.left, 12, 'left 应退到内边距而不是负数')
     assert.equal(r.top, 12)
+  })
+
+  ok('随机并列：不含 || 的行走原样返回', () => {
+    assert.equal(pickVariant('余额 {balance}'), '余额 {balance}')
+  })
+
+  ok('随机并列：含 || 时只返回其中一段', () => {
+    const candidates = ['现在便宜', '谷期省钱', '放开用']
+    for (let i = 0; i < 30; i += 1) {
+      const picked = pickVariant(candidates.join(' || '))
+      assert.ok(candidates.includes(picked), '抽到了段落外的内容: ' + picked)
+    }
+  })
+
+  ok('随机并列：并列的每一段都可能被抽到', () => {
+    const seen = new Set()
+    for (let i = 0; i < 120; i += 1) seen.add(pickVariant('A || B || C'))
+    assert.equal(seen.size, 3, '三段并列应都能被抽到')
   })
 
   ok('模板：占位符替换为实时值，未知占位符原样保留', () => {
