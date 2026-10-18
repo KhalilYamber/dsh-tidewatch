@@ -20,6 +20,7 @@ import {
 } from '../lib/pricing.js'
 import { makeCostUsageProjection } from '../lib/index.js'
 import { loadClientPlugin, runOwnershipChecks } from './client-fixture.mjs'
+import { __testables } from '../lib/index.js'
 
 const libDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'lib')
 
@@ -452,6 +453,60 @@ ok('客户端上报的版本号与 package.json 一致', () => {
   const pkg = JSON.parse(readFileSync(join(libDir, '..', 'package.json'), 'utf8'))
   assert.equal(m[1], pkg.version, `clientVersion=${m[1]}，package.json=${pkg.version}`)
 })
+
+// ── 用量读取：账号内置通道（provider deepseek-account）下 data.usage 可能为空，需回退到流记录 ──
+{
+  const usageOfMessage = __testables.usageOfMessage
+
+  ok('用量：优先取 data.usage', () => {
+    const usage = { inputTokens: 10, outputTokens: 5 }
+    assert.equal(usageOfMessage({ type: 'assistant/message', data: { usage } }), usage)
+  })
+
+  ok('用量：data.usage 缺失时回退到流里的 usage 块', () => {
+    const usage = { inputTokens: 7, outputTokens: 3 }
+    const event = {
+      type: 'assistant/message',
+      data: {
+        stream: [
+          { type: 'chunk', chunk: { type: 'text' } },
+          { type: 'chunk', chunk: { type: 'usage', usage } },
+        ],
+      },
+    }
+    assert.equal(usageOfMessage(event), usage)
+  })
+
+  ok('用量：回退时取流里最后一条 usage 块', () => {
+    const earlier = { inputTokens: 1, outputTokens: 1 }
+    const latest = { inputTokens: 9, outputTokens: 9 }
+    const event = {
+      type: 'assistant/message',
+      data: {
+        stream: [
+          { type: 'chunk', chunk: { type: 'usage', usage: earlier } },
+          { type: 'chunk', chunk: { type: 'usage', usage: latest } },
+        ],
+      },
+    }
+    assert.equal(usageOfMessage(event), latest)
+  })
+
+  ok('用量：assistant/attempt 一律不计费（守住「一次调用一笔」）', () => {
+    const usage = { inputTokens: 5, outputTokens: 5 }
+    const event = {
+      type: 'assistant/attempt',
+      data: { stream: [{ type: 'chunk', chunk: { type: 'usage', usage } }] },
+    }
+    assert.equal(usageOfMessage(event), null)
+  })
+
+  ok('用量：两条路都取不到时返回 null', () => {
+    assert.equal(usageOfMessage({ type: 'assistant/message', data: {} }), null)
+    assert.equal(usageOfMessage({ type: 'assistant/message' }), null)
+    assert.equal(usageOfMessage({ type: 'assistant/message', data: { stream: [] } }), null)
+  })
+}
 
 // ── 挂件钳位与气泡模板（纯函数；全屏 ↔ 小窗后挂件跑出视口是本项的存在理由）──
 {

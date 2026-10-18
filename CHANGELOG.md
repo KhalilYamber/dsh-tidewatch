@@ -2,6 +2,15 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
 
+## [1.13.0] - 2026-10-18
+
+### 修复
+
+- **账号内置通道（provider `deepseek-account`）下拿不到 token 与金额**：用量原先只从 `assistant/message` 的 `data.usage` 读取。账号通道共用 `llm-deepseek` 的同一套传输，用量会留在 `data.stream` 的 usage 块里，而直接字段可能为空。现按 DSH 官方 `token-meter` 的 `usageOf` 同构实现双路读取：先 `data.usage`，取不到再倒序扫 `data.stream` 找最后一条 `{ type: 'chunk', chunk: { type: 'usage' } }`
+- **维持「一次调用恰好一笔」**：官方 `usageOf` 还会读 `assistant/attempt` 的流，本插件刻意不读，失败与被重试的尝试仍不计费
+- 文件头注释纠正：原先写着「`assistant/message` 是唯一携带 usage 的事件」，官方其实还有流内一条路
+- 自检 91 → 96 项（新增 5 条：优先直接字段、回退流记录、取最后一条、attempt 不计费、两条路皆空时返回 null）
+
 ## [1.12.2] - 2026-10-18
 
 ### 修复
