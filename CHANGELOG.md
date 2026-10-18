@@ -2,6 +2,13 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
 
+## [1.7.1] - 2026-10-18
+
+### 文档
+
+- `docs/PORTING.md` 与工程说明对齐现状：两个插槽各司其职（dock 探针供数、`shell.overlay` 渲染挂件）、浮层在挂件内部绝对定位而非 portal 加测量、点击在 `pointerup` 按位移判定而非依赖 `click`、删除已取消的节假日分界常量，验证清单更新为 83 项加冒烟 10 项
+- `test/ui-smoke.mjs` 清理顺序加固：等浏览器子进程真正退出再删临时目录，此前在 Windows 上偶发 libuv 断言崩溃
+
 ## [1.7.0] - 2026-10-18
 
 ### 变更

@@ -199,6 +199,8 @@ async function main() {
     })
   } finally {
     proc.kill()
+    // 等子进程真正退出再删临时目录：立即删除时 Windows 上偶发 libuv 断言崩溃。
+    await new Promise(resolve => setTimeout(resolve, 400))
     try { rmSync(dir, { recursive: true, force: true }) } catch { /* 清理失败不影响结论 */ }
   }
 
