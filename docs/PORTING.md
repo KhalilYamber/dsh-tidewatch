@@ -11,7 +11,7 @@
 |---|---|
 | `isPeakHour(atMs)` | 某时刻是否峰时段（UTC 窗口；周末与法定节假日全天谷期） |
 | `peakPhaseAt(atMs)` | 当前相位 + 下一次切换点（倒计时数据源；跳过周末/节假日，扫描范围前后各 14 天） |
-| `isAllDayOffPeak(atMs)` | 是否全天谷期（周末或法定节假日；节假日自 `HOLIDAY_RULE_BOUNDARY` 起生效） |
+| `isAllDayOffPeak(atMs)` | 是否全天谷期（周末或法定节假日，规则无条件适用，不设生效时间） |
 | `tierFor(entry, atMs)` | 按时刻在三段价格时代中选档：基础价（legacyBase）/ 首版峰谷价（priorPeak、priorOffPeak）/ 现行峰谷价（peak、offPeak） |
 | `costOf(tokens, entry, atMs)` | 一次调用的美元成本 |
 | `priceEntryFor(model, atMs)` | 模型名归一化匹配 + 别名表（MODEL_ALIASES）→ 价目；未命中回退 default |
@@ -19,7 +19,6 @@
 | `DEFAULT_PRICE_TABLE` | 官方价目（改价只动这里） |
 | `MODEL_ALIASES` | 旧模型名 / 过渡期名称 → 现役模型 key |
 | `CN_PUBLIC_HOLIDAYS` | 中国法定节假日表（北京时间自然日；2027 年起需手动补新一年） |
-| `HOLIDAY_RULE_BOUNDARY` | 节假日「全天谷期」规则生效分界（此前仅周末全天谷期） |
 | `LEGACY_BASE_BOUNDARY` | 峰谷时代起点（此前按 legacyBase 计费） |
 | `FLASH_REPRICE_BOUNDARY` | V4.1 Flash 换价分界（此前用 prior 档） |
 | `V4_PRO_RETIRE_BOUNDARY` | V4 Pro 换价分界，现为哨兵值（官方声明计费方式不变） |
@@ -47,14 +46,15 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
 
 ### 3. 完整：按 DSH 原样
 - host：`ctx.inject(['sessionProjections'])` 注册 `costUsage` 投影（lib/index.js）
-- client：**一个插槽、两个条目**
-  - `conversation.composer.dock`（session 作用域）同时挂：
-    - 数据探针 `Probe`：渲染 null，只负责把 `useProjection('costUsage')` 的值写进模块级 bridge；
-    - 徽章 `TideCard`：从 bridge 读值，渲染成右下角可拖拽挂件（注册在 `shell.overlay`）。
-    官方 `StatsPills`（会话统计）与 `ContextMeter` 也注册在这个插槽上——宿主把同槽条目渲染进
-    输入框下方同一条 flex 行，所以胶囊与官方条目天然并列：间距、垂直对齐与窄屏换行全由官方
-    布局决定，插件不覆盖官方样式，也不做任何 DOM 探测。展开面板宽度放不进行内，portal 到
-    body 并锚定胶囊上方。
+- client：**两个插槽、各司其职**
+  - `conversation.composer.dock`（session 作用域）：挂一个渲染 `null` 的数据探针 `Probe`，只负责把
+    `useProjection('costUsage')` 的值写进模块级 bridge。之所以需要它，是因为根级插槽拿不到投影席位。
+  - `shell.overlay`（根作用域）：挂 `TideCard`，从 bridge 读值渲染右下角挂件。
+    - **形态**：立绘 + 秒级倒计时；可拖拽，松手吸附较近的左右边缘，位置存 localStorage，吸附左侧时内容镜像。
+    - **浮层**：泡泡与完整面板都挂在挂件内部做绝对定位（`bottom: calc(100% + 10px)`），不 portal、不测量。
+      portal 加位置测量的写法在测量时机不对时会把浮层渲染到屏幕外，这是踩过的坑。
+    - **交互**：点击在 `pointerup` 里按位移判定（小于 4px 视为点击），不要依赖 `click`：
+      `setPointerCapture` 会把它之后 click 的 target 改到被捕获元素，按钮的 `onClick` 就收不到点击了。
 - client 可选增强：优先 `require('@deepseek-ai/dsh-client-ui-primitives')`
   （shell 共享模块表中的 baseline 模块）取 `StateDot` / `Tag` / `Tooltip` /
   `useDismissOnOutsidePointer`，拿不到时自动退回内置实现。
@@ -90,7 +90,7 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
   并为被替换的旧价**补一段历史档**（`priorPeak` / `priorOffPeak` 的成例）；否则历史会话
   重放时会按新价计算，静默低估
 
-## 五、验证清单（node test/verify.mjs，82 项）
+## 五、验证清单（node test/verify.mjs，83 项；另有 test/ui-smoke.mjs 布局冒烟 10 项）
 
 - 峰谷窗口边界（01:00 / 04:00 / 06:00 / 10:00 整点归属）、周末规则与法定节假日规则
 - 下一切换点计算（跨午夜窗口、周末 → 下周一、节假日 → 下一个工作日，含 7 天连休）
@@ -98,4 +98,5 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
 - 模型别名命中；DeepSeek 家族未知模型回退 default；其他提供商的模型判定为不计价
 - pro 换价分界哨兵值（当前不触发，pro 恒按自身价目）
 - 缓存读写按命中价计费、负 token 非负保护
-- 双份常量一致性（client 的 `PEAK_WINDOWS` / `DISPLAY_PRICES` / `MODEL_ALIASES` / `CN_PUBLIC_HOLIDAYS` / 节假日规则分界 与 pricing 对齐）
+- 双份常量一致性（client 的 `PEAK_WINDOWS` / `DISPLAY_PRICES` / `MODEL_ALIASES` / `CN_PUBLIC_HOLIDAYS` 与 pricing 对齐）
+- 布局冒烟（`test/ui-smoke.mjs`）：挂件可见、指针可点中、泡泡在形象上方、左侧吸附不溢出视口、金额单段渲染、倒计时为 `时:分:秒`
