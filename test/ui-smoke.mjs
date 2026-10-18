@@ -115,7 +115,7 @@ async function main() {
   const browser = findBrowser()
   if (browser === null) {
     console.log('[dsh-tidewatch] ui-smoke: 未找到 Chrome/Edge，跳过（布局断言需要浏览器）')
-    return
+    return true
   }
 
   const dir = mkdtempSync(join(tmpdir(), 'tidewatch-ui-'))
@@ -200,7 +200,7 @@ async function main() {
   } finally {
     proc.kill()
     // 等子进程真正退出再删临时目录：立即删除时 Windows 上偶发 libuv 断言崩溃。
-    await new Promise(resolve => setTimeout(resolve, 400))
+    await new Promise(resolve => setTimeout(resolve, 600))
     try { rmSync(dir, { recursive: true, force: true }) } catch { /* 清理失败不影响结论 */ }
   }
 
@@ -209,7 +209,10 @@ async function main() {
     console.log(`  ${status === 'PASS' ? '✓' : '✗'} ${name}${detail === undefined ? '' : ` :: ${detail}`}`)
   }
   console.log(`[dsh-tidewatch] ui-smoke: ${results.length - failed.length}/${results.length} passed`)
-  if (failed.length > 0) process.exitCode = 1
+  return failed.length === 0
 }
 
-await main()
+const passed = await main()
+// 显式退出：浏览器子进程与调试连接结束后，Node 的事件循环里仍可能残留 handle，
+// 交给它自然退出会在 Windows 上偶发触发 libuv 断言；这里直接以结论退出。
+process.exit(passed === false ? 1 : 0)
