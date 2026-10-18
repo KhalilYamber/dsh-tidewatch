@@ -1,7 +1,7 @@
 {
   "name": "dsh-tidewatch",
   "version": "1.6.1",
-  "description": "DeepSeek 宄拌胺鏃跺埢鎮诞鍗＄墖锛氬畼鏂瑰嘲璋锋椂娈点€佸綋鍓嶆。浣嶃€佽窛涓嬩竴闃舵鍊掕鏃朵笌鏈浼氳瘽 API 鑺辫垂锛堜汉姘戝竵锛夛紱鍛ㄦ湯涓庢硶瀹氳妭鍋囨棩鍏ㄥぉ璋锋湡銆侫 floating tide card for DeepSeek Harness: official peak/off-peak windows, live phase countdown and this session's API cost in CNY; weekends and Chinese public holidays billed off-peak all day.",
+  "description": "DeepSeek 峰谷时刻悬浮卡片：官方峰谷时段、当前档位、距下一阶段倒计时与本次会话 API 花费（人民币）；周末与法定节假日全天谷期。A floating tide card for DeepSeek Harness: official peak/off-peak windows, live phase countdown and this session's API cost in CNY; weekends and Chinese public holidays billed off-peak all day.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -24,8 +24,8 @@
   "dshhub": {
     "schemaVersion": 1,
     "displayName": "dsh-tidewatch",
-    "summary": "DeepSeek 宄拌胺鏃跺埢鎮诞鍗＄墖锛氬畼鏂瑰嘲璋锋椂娈碉紙UTC 01:00鈥?4:00 / 06:00鈥?0:00 = 鍖椾含 09:00鈥?2:00 / 14:00鈥?8:00锛涘懆鏈強涓浗娉曞畾鑺傚亣鏃ュ叏澶╄胺鏈燂級銆佸綋鍓嶆。浣嶇姸鎬佺偣銆佽窛涓嬩竴闃舵鍊掕鏃躲€佹湰娆′細璇?Token 鏄庣粏涓庝汉姘戝竵璐圭敤锛堟眹鐜囧彲閰嶏級銆?,
-    "categories": ["璐圭敤", "Web UI", "瑙傛祴"],
+    "summary": "DeepSeek 峰谷时刻悬浮卡片：官方峰谷时段（UTC 01:00–04:00 / 06:00–10:00 = 北京 09:00–12:00 / 14:00–18:00；周末及中国法定节假日全天谷期）、当前档位状态点、距下一阶段倒计时、本次会话 Token 明细与人民币费用（汇率可配）。",
+    "categories": ["费用", "Web UI", "观测"],
     "surfaces": ["host", "web"],
     "capabilities": {
       "provides": ["projection:costUsage"]
