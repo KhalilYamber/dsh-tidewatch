@@ -63,9 +63,9 @@ ${CSS}
 <div class="tw-widget" id="widget" style="right:12px;bottom:96px">
   <button class="tw-mascot" id="mascot"><img class="tw-mascot-img" src="${DOT}" alt=""></button>
   <div class="tw-bubble-pop" id="bubble">
-    <div class="tw-bubble-row"><span class="tw-bubble-label">本次会话</span><span class="tw-bubble-val">¥16.71</span></div>
-    <div class="tw-bubble-row"><span class="tw-bubble-label">余额</span><span class="tw-bubble-val">¥16.71</span></div>
-    <div class="tw-bubble-row"><span class="tw-bubble-label">谷期</span><span class="tw-bubble-val" id="countdown">距峰期 17:45:23</span></div>
+    <div class="tw-bubble-line">谷期 · 距切换 <span id="countdown">距峰期 17:45:23</span></div>
+    <div class="tw-bubble-line">余额 ¥16.71</div>
+    <div class="tw-bubble-line">充值 ¥10.00 / 礼金 ¥6.71</div>
     <button class="tw-bubble-more">详情 ›</button>
   </div>
 </div>

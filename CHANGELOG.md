@@ -2,6 +2,14 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
 
+## [1.12.2] - 2026-10-18
+
+### 修复
+
+- **面板里三个「气泡内容」开关点了没有效果**：气泡自 1.9.0 改为模板驱动后，这三块开关就不再影响任何东西。连同它们的 `bubbleModules` 状态、`BUBBLE_KEY` 与读写函数、`bubbleRow` 辅助函数一并移除
+- 删除随之失效的 `tw-bubble-row` / `tw-bubble-label` / `tw-bubble-val` 样式
+- 冒烟测试的桩结构换成真实的 `tw-bubble-line`（此前仍在用已废弃的行结构，测的布局与真实观感不符）
+
 ## [1.12.1] - 2026-10-18
 
 ### 修复
