@@ -57,6 +57,8 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
       `setPointerCapture` 会把它之后 click 的 target 改到被捕获元素，按钮的 `onClick` 就收不到点击了。
       拖拽的 `pointermove` / `pointerup` 挂到 `window` 而不是挂件自身，否则鼠标移出挂件就断拖；
       拖动期间要关掉 `left`/`top` 过渡，松手只在距边缘 48px 内才吸附。
+    - **视口钳位**：挂件存的是视口绝对坐标，窗口从全屏切到小窗后旧坐标会落在视野外
+      （表现为「挂件消失」）。必须在窗口 resize 与挂载时用 `clampToViewport` 把坐标钳回视口内。
     - **气泡**：点立绘弹出漫画式对话气泡（大圆角 + 指向头顶的尖角），约 5 秒自动收起，点气泡翻页。
       每行是模板，支持 `{phase}` / `{countdown}` / `{cost}` / `{balance}` / `{paid}` / `{bonus}` /
       `{price}` / `{tokens}`；未知占位符原样保留，便于看出写错。
