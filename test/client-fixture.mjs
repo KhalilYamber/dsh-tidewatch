@@ -133,20 +133,26 @@ export function loadClientPlugin() {
     if (Object.prototype.hasOwnProperty.call(moduleTable, id)) return moduleTable[id]
     throw new Error('unexpected require: ' + id)
   })
-  const entries = new Map()
+  // 探针与胶囊都注册在 conversation.composer.dock（与官方 StatsPills 同槽），
+  // 插槽名不再能区分两者，故按注册时的 id 记录。
+  const entries = []
   pluginModule.apply({
     remote: undefined,
     get: key => (key === 'slots'
       ? {
-          inject: (name, register) => { entries.set(name, register()) },
-          register: (options, Component) => Component,
+          inject: (name, register) => { register() },
+          register: (options, Component) => {
+            entries.push({ id: options.id, name: options.name, Component })
+            return Component
+          },
         }
       : undefined),
   })
-  const Probe = entries.get('conversation.composer.dock')
-  const TideCard = entries.get('shell.overlay')
+  const byId = id => entries.find(entry => entry.id === id)?.Component
+  const Probe = byId('dsh-tidewatch-probe')
+  const TideCard = byId('dsh-tidewatch')
   if (typeof Probe !== 'function' || typeof TideCard !== 'function') {
-    throw new Error('lib/client.js 未注册预期的 Probe / TideCard（插槽名或注册路径变了）')
+    throw new Error('lib/client.js 未注册预期的 Probe / TideCard（注册 id 或路径变了）')
   }
   return { Probe, TideCard }
 }
