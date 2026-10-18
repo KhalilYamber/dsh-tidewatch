@@ -62,6 +62,10 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
     - **气泡**：点立绘弹出漫画式对话气泡（大圆角 + 指向头顶的尖角），约 5 秒自动收起，点气泡翻页。
       每行是模板，支持 `{phase}` / `{countdown}` / `{cost}` / `{balance}` / `{paid}` / `{bonus}` /
       `{price}` / `{tokens}`；未知占位符原样保留，便于看出写错。
+    - **开合规则**：点立绘只负责打开（重复点仅重置计时），收起只有两条路——约 5 秒自动淡出，
+      或点到插件之外的任何地方。淡出走 `opacity` 过渡，元素常驻 DOM 不卸载。
+    - **尾巴对准**：尾巴尖端要落在立绘头顶中心正上方。气泡宽 210px 而立绘 92px，不能用 `left: 50%`；
+      应设 `right: 41px`（立绘半宽 46 减尾巴半宽 5），吸附左侧时由 `.tw-flip` 规则镜像成 `left: 41px`。
     - **编辑器**：完整面板里可增删页与行、改模板、拖动排序（页与行都有把手）、恢复默认；配置存
       localStorage（键 `dsh-tidewatch.bubbles`），模块库存 `dsh-tidewatch.modules`。
     - **行内玩法**：`A || B` 并列时每次出泡等概率抽一段（参考插件做的是加权，这里简化）；
