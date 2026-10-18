@@ -81,6 +81,27 @@ dsh plugin --profile web remove dsh-tidewatch    # uninstall
 
 The currency choice takes effect immediately and is remembered; CNY shows 2 decimals, USD shows 4.
 
+## Two layouts
+
+The plugin ships two interface layouts; pick the one you want.
+
+### Mascot widget (v1.5.0 and later, recommended)
+
+A mascot parked in the bottom-right corner, draggable and snapping to either edge. One click pops a comic bubble; **a second click turns the page** to this session's cost. The panel carries a bubble editor (add or remove pages, edit text, drag to reorder, module library). The current version is this layout.
+
+### Inline capsule (v1.4.1, legacy)
+
+Sits in the official composer row beside the built-in stats, taking up no screen space:
+
+```sh
+# download the tarball, then
+dsh plugin --profile web add ./dsh-tidewatch-1.4.1.tgz
+```
+
+[dsh-tidewatch-1.4.1.tgz](https://github.com/KhalilYamber/dsh-tidewatch/releases/download/v1.4.1/dsh-tidewatch-1.4.1.tgz)
+
+That build offers the peak countdown, session cost, account balance and currency switch; it has **no** bubble, editor, module library or official-projection sampling. If all you want is a quiet badge in the composer, this one fits better.
+
 ## How billing works
 
 ### Peak windows (official basis)
