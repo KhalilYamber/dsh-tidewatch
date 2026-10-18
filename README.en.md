@@ -47,7 +47,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 Download the latest `dsh-tidewatch-<version>.tgz` from [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases), then:
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.12.0.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.12.1.tgz
 ```
 
 ### From a local checkout (live edits)
@@ -198,7 +198,7 @@ This plugin stands on other people's work:
 
 ## Version notes
 
-See [CHANGELOG.md](CHANGELOG.md). Current version **1.12.0**.
+See [CHANGELOG.md](CHANGELOG.md). Current version **1.12.1**.
 
 ## License
 

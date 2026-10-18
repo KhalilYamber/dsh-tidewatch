@@ -194,6 +194,41 @@ async function main() {
       })()`)
       const t = JSON.parse(toggled)
       check('泡泡可显隐（DOM 可切换）', t.before && t.hidden, JSON.stringify(t))
+      // 尾巴是要指向立绘头顶的：量出尾巴中心与立绘中心的水平差。
+      const tail = await evaluate(`(() => {
+        const bubble = document.getElementById('bubble')
+        const mascot = document.getElementById('mascot')
+        const style = getComputedStyle(bubble, '::after')
+        const br = bubble.getBoundingClientRect()
+        const mr = mascot.getBoundingClientRect()
+        const offset = parseFloat(style.right)
+        const tailCenterX = br.right - offset - 5
+        const mascotCenterX = mr.left + mr.width / 2
+        return JSON.stringify({ offset, diff: Math.round(Math.abs(tailCenterX - mascotCenterX)) })
+      })()`)
+      const tl = JSON.parse(tail)
+      check('气泡尾巴对准立绘头顶中心', tl.diff <= 2, `偏差 ${tl.diff}px（尾巴 offset=${tl.offset}px）`)
+
+      // 吸附到左侧时尾巴要镜像到另一边。
+      const flip = await evaluate(`(() => {
+        const widget = document.querySelector('.tw-widget.tw-flip')
+        const mascot = widget.querySelector('.tw-mascot')
+        const probe = document.createElement('div')
+        probe.className = 'tw-bubble-pop'
+        widget.appendChild(probe)
+        const style = getComputedStyle(probe, '::after')
+        const pr = probe.getBoundingClientRect()
+        const mr = mascot.getBoundingClientRect()
+        const offset = parseFloat(style.left)
+        const tailCenterX = pr.left + offset + 5
+        const mascotCenterX = mr.left + mr.width / 2
+        const out = { offset, diff: Math.round(Math.abs(tailCenterX - mascotCenterX)) }
+        probe.remove()
+        return JSON.stringify(out)
+      })()`)
+      const fl = JSON.parse(flip)
+      check('左侧吸附时尾巴同样对准立绘头顶', fl.diff <= 2, `偏差 ${fl.diff}px（尾巴 offset=${fl.offset}px）`)
+
       const cd = await evaluate("document.getElementById('countdown').textContent")
       check('倒计时为 时:分:秒', /^距峰期 \d{2,}:\d{2}:\d{2}$/.test(cd), cd)
     })
