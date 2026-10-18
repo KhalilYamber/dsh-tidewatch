@@ -62,6 +62,10 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
     - **气泡**：点立绘弹出漫画式对话气泡（大圆角 + 指向头顶的尖角），约 5 秒自动收起，点气泡翻页。
       每行是模板，支持 `{phase}` / `{countdown}` / `{cost}` / `{balance}` / `{paid}` / `{bonus}` /
       `{price}` / `{tokens}`；未知占位符原样保留，便于看出写错。
+    - **编辑器**：完整面板里可增删页与行、改模板、拖动排序（页与行都有把手）、恢复默认；配置存
+      localStorage（键 `dsh-tidewatch.bubbles`），模块库存 `dsh-tidewatch.modules`。
+    - **行内玩法**：`A || B` 并列时每次出泡等概率抽一段（参考插件做的是加权，这里简化）；
+      行以 `img:` 开头即按图片渲染（在线 URL 与 data URI 均可）。
 - client 可选增强：优先 `require('@deepseek-ai/dsh-client-ui-primitives')`
   （shell 共享模块表中的 baseline 模块）取 `StateDot` / `Tag` / `Tooltip` /
   `useDismissOnOutsidePointer`，拿不到时自动退回内置实现。
