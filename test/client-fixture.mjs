@@ -154,7 +154,7 @@ export function loadClientPlugin() {
   if (typeof Probe !== 'function' || typeof TideCard !== 'function') {
     throw new Error('lib/client.js 未注册预期的 Probe / TideCard（注册 id 或路径变了）')
   }
-  return { Probe, TideCard }
+  return { Probe, TideCard, testables: pluginModule.__testables ?? {} }
 }
 
 /** 真实形状的 SessionListState（字段取自 dsh-api-session-controller 的 service.ts）。 */

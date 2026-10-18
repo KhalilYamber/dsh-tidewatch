@@ -19,7 +19,7 @@ import {
   V4_PRO_RETIRE_BOUNDARY, MODEL_ALIASES, CN_PUBLIC_HOLIDAYS, BEIJING_OFFSET_MS,
 } from '../lib/pricing.js'
 import { makeCostUsageProjection } from '../lib/index.js'
-import { runOwnershipChecks } from './client-fixture.mjs'
+import { loadClientPlugin, runOwnershipChecks } from './client-fixture.mjs'
 
 const libDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'lib')
 
@@ -452,6 +452,40 @@ ok('客户端上报的版本号与 package.json 一致', () => {
   const pkg = JSON.parse(readFileSync(join(libDir, '..', 'package.json'), 'utf8'))
   assert.equal(m[1], pkg.version, `clientVersion=${m[1]}，package.json=${pkg.version}`)
 })
+
+// ── 挂件钳位与气泡模板（纯函数；全屏 ↔ 小窗后挂件跑出视口是本项的存在理由）──
+{
+  const { testables } = loadClientPlugin()
+  const clamp = testables.clampToViewport
+  const fill = testables.fillTemplate
+
+  ok('钳位：窗口变小后右下角坐标被拉回视口内', () => {
+    const r = clamp({ left: 1700, top: 900 }, { width: 1200, height: 800 }, { width: 92, height: 92 })
+    assert.equal(r.left, 1200 - 92 - 12, 'left 应贴到右边缘内 12px')
+    assert.equal(r.top, 800 - 92 - 12, 'top 应贴到底边缘内 12px')
+  })
+
+  ok('钳位：负坐标被拉回到内边距', () => {
+    const r = clamp({ left: -50, top: -80 }, { width: 1200, height: 800 }, { width: 92, height: 92 })
+    assert.equal(r.left, 12)
+    assert.equal(r.top, 12)
+  })
+
+  ok('钳位：视口足够大时合法坐标原样保留', () => {
+    const r = clamp({ left: 300, top: 200 }, { width: 1920, height: 1080 }, { width: 92, height: 92 })
+    assert.deepEqual(r, { left: 300, top: 200 })
+  })
+
+  ok('钳位：视口比挂件还小时仍给出非负坐标', () => {
+    const r = clamp({ left: 500, top: 500 }, { width: 60, height: 60 }, { width: 92, height: 92 })
+    assert.equal(r.left, 12, 'left 应退到内边距而不是负数')
+    assert.equal(r.top, 12)
+  })
+
+  ok('模板：占位符替换为实时值，未知占位符原样保留', () => {
+    assert.equal(fill('余额 {balance} · 未定义 {nope}', { balance: '¥16.71' }), '余额 ¥16.71 · 未定义 {nope}')
+  })
+}
 
 // ── 归属判据回归（加载真实 lib/client.js，驱动会话切换序列）──────────────
 const ownership = runOwnershipChecks()

@@ -45,7 +45,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 到 [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases) 下载最新的 `dsh-tidewatch-<版本>.tgz`，然后：
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.9.1.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.9.2.tgz
 ```
 
 ### 本地链接安装（改源码即时生效）
@@ -167,7 +167,7 @@ dsh-tidewatch
 # 构建（语法检查 + zod 依赖 junction）
 DSH_CHECKOUT=<harness 源码根目录> bash scripts/build.sh
 
-# 全套自检：峰谷数学、双份常量一致性、计费口径回归、归属判据回归
+# 全套自检（88 项）：峰谷数学、双份常量一致性、计费口径回归、挂件钳位、归属判据回归
 node test/verify.mjs
 
 # 布局冒烟测试：用真实样式表在无头 Chrome 里渲染挂件/泡泡/面板并断言布局
@@ -196,7 +196,7 @@ node test/ui-smoke.mjs
 
 ## 版本说明
 
-历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.9.1**。
+历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.9.2**。
 
 ## 许可
 
