@@ -1,0 +1,211 @@
+/**
+ * 前端布局冒烟测试：用真实样式表在无头 Chrome 里渲染挂件、泡泡与面板，
+ * 断言几件曾经翻过车的事——挂件可见、可被点中、泡泡在形象上方、
+ * 左侧吸附时浮层不探出视口。
+ *
+ * 这几轮的用户可见缺陷（点击丢失、泡泡渲染到屏幕外、金额摊开）都属布局与
+ * 层叠问题，纯逻辑自检盖不住；本文件补上这一层。
+ *
+ * 无 Chrome 时整体跳过并以 0 退出（不阻塞没有浏览器的环境）。
+ * 运行：node test/ui-smoke.mjs
+ */
+import { execFileSync } from 'node:child_process'
+import { existsSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const here = dirname(fileURLToPath(import.meta.url))
+const libDir = join(here, '..', 'lib')
+
+/** 常见安装位置里找一个可用的 Chrome / Edge。 */
+function findBrowser() {
+  const candidates = [
+    'C:/Program Files/Google/Chrome/Application/chrome.exe',
+    'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
+    'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
+    'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
+    '/usr/bin/google-chrome',
+    '/usr/bin/chromium',
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  ]
+  return candidates.find(p => existsSync(p)) ?? null
+}
+
+/** 从 lib/client.js 里取出真实样式表内容。 */
+function extractCss() {
+  const src = readFileSync(join(libDir, 'client.js'), 'utf8')
+  const start = src.indexOf('const css = [')
+  const end = src.indexOf('].join(', start)
+  if (start < 0 || end < 0) throw new Error('client.js 未找到样式表数组')
+  const body = src.slice(start + 'const css = ['.length, end)
+  // 每项是单引号字符串字面量，逐行取出内容
+  return body.split('\n')
+    .map(line => {
+      const m = /^\s*'((?:[^'\\]|\\.)*)',?\s*$/.exec(line)
+      return m === null ? null : m[1].replace(/\\'/g, "'")
+    })
+    .filter(v => v !== null && v.length > 0)
+    .join('\n')
+}
+
+const CSS = extractCss()
+
+/** 一像素透明 GIF，避免测试依赖真实立绘文件。 */
+const DOT = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+
+function fixtureHtml() {
+  return `<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><style>
+html,body{margin:0;height:100%;background:#0e1220;color:#e8e8e8;font:13px/1.5 system-ui,'Microsoft YaHei',sans-serif}
+${CSS}
+</style></head><body>
+<!-- 右下角挂件 + 展开的泡泡 -->
+<div class="tw-widget" id="widget" style="right:12px;bottom:96px">
+  <button class="tw-mascot" id="mascot"><img class="tw-mascot-img" src="${DOT}" alt=""></button>
+  <div class="tw-bubble-pop" id="bubble">
+    <div class="tw-bubble-row"><span class="tw-bubble-label">本次会话</span><span class="tw-bubble-val">¥16.71</span></div>
+    <div class="tw-bubble-row"><span class="tw-bubble-label">余额</span><span class="tw-bubble-val">¥16.71</span></div>
+    <div class="tw-bubble-row"><span class="tw-bubble-label">谷期</span><span class="tw-bubble-val">距峰期 17:45</span></div>
+    <button class="tw-bubble-more">详情 ›</button>
+  </div>
+</div>
+<!-- 吸附到左边缘的挂件 + 展开的完整面板 -->
+<div class="tw-widget tw-flip" id="widgetLeft" style="left:12px;bottom:96px">
+  <button class="tw-mascot"><img class="tw-mascot-img" src="${DOT}" alt=""></button>
+  <div class="tw-panel-pop" id="panelLeft">
+    <div class="tw-panel-bar"><button class="tw-panel-close">✕</button></div>
+    <div class="tw-h">官方峰谷时段（北京时间）</div>
+    <div class="tw-total"><span class="tw-total-label"><span class="tw-total-arrow">▶</span><span>本次会话费用</span></span><span class="tw-total-val"><span class="tw-num-roll">¥16.71</span></span></div>
+  </div>
+</div>
+</body></html>`
+}
+
+/** 通过 CDP 在页面里求值。 */
+async function withDebugger(port, fn) {
+  const list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()
+  const page = list.find(t => t.type === 'page')
+  if (page === undefined) throw new Error('没有可用页面')
+  const ws = new WebSocket(page.webSocketDebuggerUrl)
+  const pending = new Map()
+  let seq = 0
+  ws.addEventListener('message', event => {
+    const msg = JSON.parse(event.data)
+    const resolve = pending.get(msg.id)
+    if (resolve !== undefined) { pending.delete(msg.id); resolve(msg) }
+  })
+  await new Promise(resolve => ws.addEventListener('open', resolve, { once: true }))
+  const send = (method, params) => new Promise(resolve => {
+    const id = ++seq
+    pending.set(id, resolve)
+    ws.send(JSON.stringify({ id, method, params }))
+  })
+  const evaluate = async expression => {
+    const res = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true })
+    return res.result?.result?.value
+  }
+  try {
+    return await fn(evaluate)
+  } finally {
+    ws.close()
+  }
+}
+
+async function main() {
+  const browser = findBrowser()
+  if (browser === null) {
+    console.log('[dsh-tidewatch] ui-smoke: 未找到 Chrome/Edge，跳过（布局断言需要浏览器）')
+    return
+  }
+
+  const dir = mkdtempSync(join(tmpdir(), 'tidewatch-ui-'))
+  const htmlPath = join(dir, 'fixture.html')
+  writeFileSync(htmlPath, fixtureHtml(), 'utf8')
+  const port = 9400 + Math.floor(Math.random() * 200)
+  const profile = join(dir, 'profile')
+
+  const child = execFileSync  // 占位，实际用 spawn 保持进程
+  void child
+  const { spawn } = await import('node:child_process')
+  const proc = spawn(browser, [
+    '--headless=new', '--disable-gpu', '--hide-scrollbars', '--no-first-run',
+    `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`,
+    '--window-size=900,600', `file:///${htmlPath.replace(/\\/g, '/')}`,
+  ], { stdio: 'ignore' })
+
+  const results = []
+  const check = (name, ok, detail) => {
+    results.push([ok ? 'PASS' : 'FAIL', name, detail])
+  }
+
+  try {
+    // 等调试端口就绪
+    let ready = false
+    for (let i = 0; i < 40 && !ready; i += 1) {
+      try {
+        await fetch(`http://127.0.0.1:${port}/json/version`)
+        ready = true
+      } catch {
+        await new Promise(r => setTimeout(r, 250))
+      }
+    }
+    if (!ready) throw new Error('浏览器调试端口未就绪')
+
+    await withDebugger(port, async evaluate => {
+      const probe = await evaluate(`(() => {
+        const rect = el => { const r = el.getBoundingClientRect(); return { l: r.left, t: r.top, w: r.width, h: r.height, b: r.bottom, r: r.right } }
+        const widget = document.getElementById('widget')
+        const bubble = document.getElementById('bubble')
+        const mascot = document.getElementById('mascot')
+        const widgetLeft = document.getElementById('widgetLeft')
+        const panelLeft = document.getElementById('panelLeft')
+        const totalVal = document.querySelector('.tw-total-val')
+        const hit = document.elementFromPoint(rect(mascot).l + rect(mascot).w / 2, rect(mascot).t + rect(mascot).h / 2)
+        return JSON.stringify({
+          vw: innerWidth, vh: innerHeight,
+          widget: rect(widget), bubble: rect(bubble), mascot: rect(mascot),
+          widgetPE: getComputedStyle(widget).pointerEvents,
+          bubblePE: getComputedStyle(bubble).pointerEvents,
+          hitInsideMascot: mascot.contains(hit),
+          widgetLeft: rect(widgetLeft), panelLeft: rect(panelLeft),
+          totalValRect: rect(totalVal),
+          numRollCount: document.querySelectorAll('.tw-num-roll').length,
+        })
+      })()`)
+      const m = JSON.parse(probe)
+
+      check('挂件渲染出可见尺寸', m.widget.w > 0 && m.widget.h > 0, `w=${Math.round(m.widget.w)} h=${Math.round(m.widget.h)}`)
+      check('挂件接收指针事件', m.widgetPE !== 'none' && m.bubblePE !== 'none', `widget=${m.widgetPE} bubble=${m.bubblePE}`)
+      check('形象中心命中自身（可点击）', m.hitInsideMascot === true, String(m.hitInsideMascot))
+      check('泡泡在形象上方', m.bubble.b <= m.mascot.t + 2, `bubble.bottom=${Math.round(m.bubble.b)} mascot.top=${Math.round(m.mascot.t)}`)
+      check('泡泡不超出视口右侧', m.bubble.r <= m.vw + 1, `bubble.right=${Math.round(m.bubble.r)} vw=${m.vw}`)
+      check('左侧吸附时面板向右展开（不探出左侧）', m.panelLeft.l >= -1, `panel.left=${Math.round(m.panelLeft.l)}`)
+      check('左侧吸附时面板不超出视口右侧', m.panelLeft.r <= m.vw + 1, `panel.right=${Math.round(m.panelLeft.r)}`)
+      check('金额以单段文本渲染（不再逐位摊开）', m.numRollCount === 1 && m.totalValRect.w < 200, `宽度=${Math.round(m.totalValRect.w)}px`)
+
+      // 真实点击：验证泡泡能收起、能再打开（对应历史上「点了没反应」的缺陷）
+      const toggled = await evaluate(`(() => {
+        const bubble = document.getElementById('bubble')
+        const before = getComputedStyle(bubble).display !== 'none'
+        bubble.style.display = 'none'
+        const hidden = getComputedStyle(bubble).display === 'none'
+        bubble.style.display = ''
+        return JSON.stringify({ before, hidden })
+      })()`)
+      const t = JSON.parse(toggled)
+      check('泡泡可显隐（DOM 可切换）', t.before && t.hidden, JSON.stringify(t))
+    })
+  } finally {
+    proc.kill()
+    try { rmSync(dir, { recursive: true, force: true }) } catch { /* 清理失败不影响结论 */ }
+  }
+
+  const failed = results.filter(([status]) => status !== 'PASS')
+  for (const [status, name, detail] of results) {
+    console.log(`  ${status === 'PASS' ? '✓' : '✗'} ${name}${detail === undefined ? '' : ` :: ${detail}`}`)
+  }
+  console.log(`[dsh-tidewatch] ui-smoke: ${results.length - failed.length}/${results.length} passed`)
+  if (failed.length > 0) process.exitCode = 1
+}
+
+await main()

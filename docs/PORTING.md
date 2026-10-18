@@ -50,7 +50,7 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
 - client：**一个插槽、两个条目**
   - `conversation.composer.dock`（session 作用域）同时挂：
     - 数据探针 `Probe`：渲染 null，只负责把 `useProjection('costUsage')` 的值写进模块级 bridge；
-    - 徽章 `TideCard`：从 bridge 读值，把胶囊直接渲染成行内元素。
+    - 徽章 `TideCard`：从 bridge 读值，渲染成右下角可拖拽挂件（注册在 `shell.overlay`）。
     官方 `StatsPills`（会话统计）与 `ContextMeter` 也注册在这个插槽上——宿主把同槽条目渲染进
     输入框下方同一条 flex 行，所以胶囊与官方条目天然并列：间距、垂直对齐与窄屏换行全由官方
     布局决定，插件不覆盖官方样式，也不做任何 DOM 探测。展开面板宽度放不进行内，portal 到

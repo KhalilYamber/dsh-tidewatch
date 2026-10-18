@@ -19,7 +19,7 @@ What it sells is a checkable definition: the peak windows, weekends, public holi
 |---|---|
 | **Peak windows** | Official window rules; second-by-second countdown to the next phase; weekends and Chinese public holidays billed off-peak all day; make-up working weekends likewise |
 | **Billing** | Three historical price eras (base / first peak schedule / V4.1 Flash repricing) chosen by each call's timestamp; cache hit and miss priced separately; output includes reasoning tokens |
-| **Balance** | DeepSeek account balance (paid / bonus / total) with the reading time; one alert when it drops below a threshold |
+| **Balance** | DeepSeek account balance (paid / bonus / total) with the reading time |
 | **Widget** | Mascot pinned to the bottom-right corner, draggable, snaps to the nearer edge on release, position persisted; a different pose for peak and off-peak |
 | **Interaction** | A click opens a summary bubble (session cost / balance / phase); `详情 ›` opens the full panel; the panel can be closed |
 | **Look** | Follows the GUI light/dark theme (`--dsw-*` tokens); reuses the official DSH UI primitives; synthesized audio cues with no audio assets |
@@ -44,7 +44,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 Download the latest `dsh-tidewatch-<version>.tgz` from [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases), then:
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.6.6.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.6.8.tgz
 ```
 
 ### From a local checkout (live edits)
@@ -167,6 +167,10 @@ DSH_CHECKOUT=<harness source root> bash scripts/build.sh
 
 # full self-check: peak math, dual-constant parity, billing regression, ownership regression
 node test/verify.mjs
+
+# layout smoke: renders the widget, bubble and panel in headless Chrome with the real
+# stylesheet and asserts their geometry (skipped when no Chrome is present)
+node test/ui-smoke.mjs
 ```
 
 Under Git Bash, `DSH_CHECKOUT` must use a **Windows-style** path (e.g. `D:/DeepSeek-Harness/...`): a `/d/...` path is resolved by Node as `D:\d\...` and produces a dangling junction, which breaks assembly on the next launch for link-installed plugins. The script validates the resolved target before replacing the link.
@@ -177,6 +181,7 @@ Under Git Bash, `DSH_CHECKOUT` must use a **Windows-style** path (e.g. `D:/DeepS
 - **Holiday table covers 2026 only**; the 2027 arrangement needs to be added to `CN_PUBLIC_HOLIDAYS` (both files) once published
 - **The V4 Pro repricing boundary** is a sentinel for now: the official statement says billing is unchanged; if that changes, fill the date back into `V4_PRO_RETIRE_BOUNDARY`
 - **Failed or retried calls are not billed**, matching the official token-meter definition; that is the ceiling of the definition, not an omission
+- **No balance alert**: an earlier build beeped once when the balance dropped below a hard-coded threshold. The threshold was not configurable, the feature was half-finished, and the DeepSeek console may already notify on low balance, so it was removed rather than duplicated
 
 ## Acknowledgements
 
@@ -189,7 +194,7 @@ This plugin stands on other people's work:
 
 ## Version notes
 
-See [CHANGELOG.md](CHANGELOG.md). Current version **1.6.6**.
+See [CHANGELOG.md](CHANGELOG.md). Current version **1.6.8**.
 
 ## License
 

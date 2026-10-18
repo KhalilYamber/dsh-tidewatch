@@ -19,7 +19,7 @@ DeepSeek 自 2026-08-17 起对 API 实行峰谷分时定价：峰期价目是谷
 |---|---|
 | **峰谷** | 官方峰谷窗口判定；秒级倒计时到下一阶段；周末与法定节假日全天谷期；调休上班的周末同样全天谷期 |
 | **计费** | 三段历史价格时代（基础价 / 首版峰谷价 / V4.1 Flash 新价）按调用时刻选档；缓存命中与未命中分开计价；输出含推理 token |
-| **余额** | 读取 DeepSeek 账户余额（充值 / 礼金 / 合计）与读数时刻；低于阈值时提示一次 |
+| **余额** | 读取 DeepSeek 账户余额（充值 / 礼金 / 合计）与读数时刻 |
 | **挂件** | 右下角常驻立绘，可拖拽，松手吸附到较近的一侧，位置持久化；峰期与谷期换不同立绘 |
 | **交互** | 单击弹出摘要泡泡（会话费用 / 余额 / 峰谷）；「详情 ›」展开完整面板；面板可关闭 |
 | **观感** | 跟随 GUI 亮暗主题（`--dsw-*` 变量）；复用 DSH 官方 UI 原语；合成提示音（无音频素材） |
@@ -44,7 +44,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 到 [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases) 下载最新的 `dsh-tidewatch-<版本>.tgz`，然后：
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.6.6.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.6.8.tgz
 ```
 
 ### 本地链接安装（改源码即时生效）
@@ -167,6 +167,10 @@ DSH_CHECKOUT=<harness 源码根目录> bash scripts/build.sh
 
 # 全套自检：峰谷数学、双份常量一致性、计费口径回归、归属判据回归
 node test/verify.mjs
+
+# 布局冒烟测试：用真实样式表在无头 Chrome 里渲染挂件/泡泡/面板并断言布局
+# （无 Chrome 时自动跳过；这段覆盖纯逻辑测不到的层叠与定位问题）
+node test/ui-smoke.mjs
 ```
 
 `DSH_CHECKOUT` 在 Git Bash 下需用 **Windows 形式**路径（如 `D:/DeepSeek-Harness/DSHAR工作目录/deepseek-harness-src`）：传 `/d/...` 会被 Node 解析成 `D:\d\...`，生成悬空 junction；插件为 link 安装时，坏链接会让下次启动装配失败。脚本在替换链接之前校验解析结果，坏路径当场报错。
@@ -177,6 +181,7 @@ node test/verify.mjs
 - **节假日表内置 2026 年**，2027 年安排公布后需手动同步 `CN_PUBLIC_HOLIDAYS`（同样两处）
 - **V4 Pro 换价分界**目前是哨兵值：官方声明计费方式保持不变，如有变动需把日期填回 `V4_PRO_RETIRE_BOUNDARY`
 - **失败或被重试的调用不计费**，与官方 token-meter 口径一致；这是口径上限，不是遗漏
+- **不提供余额预警**：早期版本有一个「余额低于阈值响一声」的功能，阈值写死且不可配置，属于半成品；DeepSeek 控制台本身可能已有余额提醒，故移除，不做重复建设
 
 ## 致谢
 
@@ -189,7 +194,7 @@ node test/verify.mjs
 
 ## 版本说明
 
-历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.6.6**。
+历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.6.8**。
 
 ## 许可
 
