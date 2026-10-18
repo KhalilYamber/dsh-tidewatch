@@ -100,7 +100,9 @@ dsh plugin --profile web add ./dsh-tidewatch-1.4.1.tgz
 
 [dsh-tidewatch-1.4.1.tgz](https://github.com/KhalilYamber/dsh-tidewatch/releases/download/v1.4.1/dsh-tidewatch-1.4.1.tgz)
 
-That build offers the peak countdown, session cost, account balance and currency switch; it has **no** bubble, editor, module library or official-projection sampling. If all you want is a quiet badge in the composer, this one fits better.
+That build offers the peak countdown, session cost, account balance and currency switch; it has **no** bubble, editor, module library or official-projection sampling, and none of the defect fixes that came later.
+
+> Known issue: the v1.4.1 badge lives on the app-level overlay, so it **also shows on plugin settings pages** (the behaviour reported in [issue #3](https://github.com/KhalilYamber/dsh-tidewatch/issues/3)). If you want a quiet badge without that, use the current version and drag the mascot into a corner.
 
 ## How billing works
 

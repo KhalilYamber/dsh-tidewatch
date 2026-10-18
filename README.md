@@ -100,7 +100,9 @@ dsh plugin --profile web add ./dsh-tidewatch-1.4.1.tgz
 
 [dsh-tidewatch-1.4.1.tgz](https://github.com/KhalilYamber/dsh-tidewatch/releases/download/v1.4.1/dsh-tidewatch-1.4.1.tgz)
 
-该版本提供峰谷倒计时、会话费用、账户余额与币种切换；**不含**气泡、编辑器、模块库与官方投影采样。若只想要一枚安静的输入框徽章，它更合适。
+该版本提供峰谷倒计时、会话费用、账户余额与币种切换；**不含**气泡、编辑器、模块库、官方投影采样，也不含后续修掉的若干缺陷。
+
+> 已知问题：v1.4.1 的徽章挂在应用级浮层上，**在插件设置页也会显示**（即 [issue #3](https://github.com/KhalilYamber/dsh-tidewatch/issues/3) 报告的现象）。想要安静的徽章又要避开它，请用当前版本并把立绘拖到角落。
 
 ## 计费口径
 
