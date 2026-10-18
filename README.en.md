@@ -89,20 +89,20 @@ The plugin ships two interface layouts; pick the one you want.
 
 A mascot parked in the bottom-right corner, draggable and snapping to either edge. One click pops a comic bubble; **a second click turns the page** to this session's cost. The panel carries a bubble editor (add or remove pages, edit text, drag to reorder, module library). The current version is this layout.
 
-### Inline capsule (v1.4.1, legacy)
+### Inline capsule (v1.4.2, the other layout)
 
 Sits in the official composer row beside the built-in stats, taking up no screen space:
 
 ```sh
 # download the tarball, then
-dsh plugin --profile web add ./dsh-tidewatch-1.4.1.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.4.2.tgz
 ```
 
-[dsh-tidewatch-1.4.1.tgz](https://github.com/KhalilYamber/dsh-tidewatch/releases/download/v1.4.1/dsh-tidewatch-1.4.1.tgz)
+[dsh-tidewatch-1.4.2.tgz](https://github.com/KhalilYamber/dsh-tidewatch/releases/download/v1.4.2/dsh-tidewatch-1.4.2.tgz)
 
-That build offers the peak countdown, session cost, account balance and currency switch; it has **no** bubble, editor, module library or official-projection sampling, and none of the defect fixes that came later.
+That build offers the peak countdown, session cost, account balance and currency switch, and it **also estimates the account provider's cost from the balance drop**; it has **no** bubble, editor, module library or official-projection sampling, and none of the defect fixes that came later.
 
-> Known issue: the v1.4.1 badge lives on the app-level overlay, so it **also shows on plugin settings pages** (the behaviour reported in [issue #3](https://github.com/KhalilYamber/dsh-tidewatch/issues/3)). If you want a quiet badge without that, use the current version and drag the mascot into a corner.
+> Known issue: the capsule badge lives on the app-level overlay, so it **also shows on plugin settings pages** (the behaviour reported in [issue #3](https://github.com/KhalilYamber/dsh-tidewatch/issues/3)). If you want a quiet badge without that, use the current version and drag the mascot into a corner.
 
 ## How billing works
 
