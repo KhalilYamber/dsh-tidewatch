@@ -47,7 +47,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 Download the latest `dsh-tidewatch-<version>.tgz` from [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases), then:
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.13.0.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.13.1.tgz
 ```
 
 ### From a local checkout (live edits)
@@ -185,6 +185,7 @@ Under Git Bash, `DSH_CHECKOUT` must use a **Windows-style** path (e.g. `D:/DeepS
 - **Holiday table covers 2026 only**; the 2027 arrangement needs to be added to `CN_PUBLIC_HOLIDAYS` (both files) once published
 - **The V4 Pro repricing boundary** is a sentinel for now: the official statement says billing is unchanged; if that changes, fill the date back into `V4_PRO_RETIRE_BOUNDARY`
 - **Failed or retried calls are not billed**, matching the official token-meter definition; that is the ceiling of the definition, not an omission
+- **The account provider reports no usage**: DSH's built-in account provider (`deepseek-account`) returns no usage on `assistant/message` and none in the stream records either, so tokens and cost cannot be computed for those sessions. The UI shows "not reported" instead of `¥0.00` so a missing number is not mistaken for a free one; sessions on your own API key bill normally
 - **No balance alert**: an earlier build beeped once when the balance dropped below a hard-coded threshold. The threshold was not configurable, the feature was half-finished, and the DeepSeek console may already notify on low balance, so it was removed rather than duplicated
 
 ## Acknowledgements
@@ -198,7 +199,7 @@ This plugin stands on other people's work:
 
 ## Version notes
 
-See [CHANGELOG.md](CHANGELOG.md). Current version **1.13.0**.
+See [CHANGELOG.md](CHANGELOG.md). Current version **1.13.1**.
 
 ## License
 

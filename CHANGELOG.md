@@ -2,6 +2,14 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
 
+## [1.13.1] - 2026-10-18
+
+### 变更
+
+- **通道不提供用量时如实标注**：投影收到 `assistant/message` 却取不到 usage 时记下 `usageMissed`，气泡与面板的金额、token 显示「未提供」而非 `¥0.00`，避免把「没有数据」呈现成「免费」
+- 实测确认：账号内置通道（`deepseek-account`）连 `data.stream` 里也不带 usage，属于该通道的能力边界，插件侧无法计算。README 的「已知限制」已写明，并说明改用自己 API key 的通道可正常计费
+- 投影 `stateVersion` 6 → 7（视图新增字段）
+
 ## [1.13.0] - 2026-10-18
 
 ### 修复
