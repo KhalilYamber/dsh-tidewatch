@@ -2,6 +2,16 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
 
+## [1.16.0] - 2026-10-18
+
+### 变更（架构）
+
+- **账号内置通道的用量改为「宿主采样官方投影」**：客户端订阅不到官方投影（`useProjection` 只能取本插件注册的投影，诊断行已证实「未取到」），因此改由宿主侧监听 `session/event`，在结算事件后用 `sessionProjections.snapshot(session, ['tokenUsage'])` 采样，写进 `costUsage` 投影的视图一起下发
+- 前端仍保留原有回退：自有投影有金额就用它，没有就用官方 token 乘本插件价目表
+- **视图 schema 补 `official` 字段**：`viewSchema` 是 `.strict()` 的，未声明的键会被校验剔除 —— 这正是第一版改动没生效的原因，端到端断言当场抓出
+- 投影 `stateVersion` 9 → 10
+- 自检 97 → 100 项，新增**端到端断言**：模拟宿主 `snapshot` 返回 100 万未命中输入 + 50 万输出 + 200 万缓存读，断言投影视图透传官方 token，并断言前端渲染出 **¥3.04**（与手算 0.456 USD 一致）
+
 ## [1.15.1] - 2026-10-18
 
 ### 新增

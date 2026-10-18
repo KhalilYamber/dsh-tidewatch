@@ -19,7 +19,7 @@ import {
   V4_PRO_RETIRE_BOUNDARY, MODEL_ALIASES, CN_PUBLIC_HOLIDAYS, BEIJING_OFFSET_MS,
 } from '../lib/pricing.js'
 import { makeCostUsageProjection } from '../lib/index.js'
-import { loadClientPlugin, runOwnershipChecks } from './client-fixture.mjs'
+import { costTextOf, loadClientPlugin, runOwnershipChecks } from './client-fixture.mjs'
 import { __testables } from '../lib/index.js'
 
 const libDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'lib')
@@ -510,6 +510,54 @@ ok('客户端上报的版本号与 package.json 一致', () => {
     assert.equal(usageOfEvent({ type: 'assistant/message', data: {} }), null)
     assert.equal(usageOfEvent({ type: 'assistant/message' }), null)
     assert.equal(usageOfEvent({ type: 'assistant/message', data: { stream: [] } }), null)
+  })
+}
+
+// ── 端到端：账号内置通道的用量走「宿主采样官方投影 → 前端计价」这条新链路 ──
+{
+  const handlers = []
+  const officialTokens = { uncachedInputTokens: 1_000_000, outputTokens: 500_000, cacheReadTokens: 2_000_000, cacheWriteTokens: 0 }
+  let definition = null
+  const indexModule = await import('../lib/index.js')
+  indexModule.apply({
+    logger: { debug() {} },
+    inject(_deps, run) {
+      run({
+        sessionProjections: {
+          register(def) { definition = def },
+          snapshot: (session, keys) => (keys !== undefined && keys.includes('tokenUsage') ? { values: { tokenUsage: officialTokens } } : { values: {} }),
+        },
+        on(name, fn) { handlers.push({ name, fn }) },
+      })
+    },
+  })
+
+  ok('端到端：宿主注册了 session/event 监听', () => {
+    assert.ok(handlers.some(h => h.name === 'session/event'), '应监听会话事件')
+    assert.ok(definition !== null, '应注册投影')
+  })
+
+  ok('端到端：结算事件后官方 token 进入投影视图', () => {
+    const handler = handlers.find(h => h.name === 'session/event')
+    handler.fn({ id: 'sess-1' }, { type: 'assistant/message', data: { turn: 1, step: 1 } })
+    const state = definition.apply(definition.init(), { type: 'assistant/message', data: { turn: 1, step: 1 }, time: Date.now() })
+    const view = definition.wire.view(state)
+    assert.equal(view.official.uncachedInputTokens, 1_000_000, '未命中输入应透传')
+    assert.equal(view.official.outputTokens, 500_000, '输出应透传')
+  })
+
+  ok('端到端：前端用官方 token 算出金额（¥3.04）', () => {
+    const state = definition.apply(definition.init(), { type: 'assistant/message', data: { turn: 1, step: 1 }, time: Date.now() })
+    const view = definition.wire.view(state)
+    const { TideCard, Probe } = loadClientPlugin()
+    const useProjection = key => (key === 'costUsage' ? view : undefined)
+    Probe({ sessionId: 'sess-1', useProjection })
+    const tree = TideCard({
+      useProjection,
+      useSessions: sel => sel({ phase: 'ready', byId: { 'sess-1': { blank: false } } }),
+      account: undefined,
+    })
+    assert.equal(costTextOf(tree), '¥3.04', '100万×0.15 + 50万×0.6 + 200万×0.003 = 0.456 USD ≈ ¥3.04')
   })
 }
 
