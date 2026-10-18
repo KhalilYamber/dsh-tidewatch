@@ -47,7 +47,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 Download the latest `dsh-tidewatch-<version>.tgz` from [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases), then:
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.17.0.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.18.0.tgz
 ```
 
 ### From a local checkout (live edits)
@@ -192,7 +192,7 @@ dsh-tidewatch
 # build (syntax check + zod dependency junction)
 DSH_CHECKOUT=<harness source root> bash scripts/build.sh
 
-# full self-check (100 checks): peak math, dual-constant parity, billing regression, dual-path usage reading, widget clamping, random variants, ownership regression
+# full self-check (104 checks): peak math, dual-constant parity, billing regression, dual-path usage reading, widget clamping, random variants, ownership regression
 node test/verify.mjs
 
 # layout smoke: renders the widget, bubble and panel in headless Chrome with the real
@@ -209,6 +209,7 @@ Under Git Bash, `DSH_CHECKOUT` must use a **Windows-style** path (e.g. `D:/DeepS
 - **The V4 Pro repricing boundary** is a sentinel for now: the official statement says billing is unchanged; if that changes, fill the date back into `V4_PRO_RETIRE_BOUNDARY`
 - **Failed or retried calls are not billed**, matching the official token-meter definition; that is the ceiling of the definition, not an omission
 - **The account provider is priced from the official projection**: the plugin's own projection gets no usage on that provider, so the host listens to `session/event` and samples DSH's `tokenUsage` via `sessionProjections.snapshot(session, ['tokenUsage'])` (the source of the "351M tok · 97% cache hit" line), ships it with the projection view, and the browser prices those tokens with this plugin's table. Trade-offs: those sessions bill at the *current* tier, and only the latest sample is kept, so with several concurrent sessions the foreground one wins
+- **The account provider's cost is an estimate**: that provider reports no usage, so the plugin estimates this session's cost from how much the balance dropped, and marks the amount "estimate". The balance is account-wide, so concurrent sessions or devices on the same account all draw it down and the estimate runs high — that is the ceiling of the method, not a defect
 - **Missing usage is labelled, never zeroed**: a provider may omit usage from its settlement events; the UI then shows "not reported" rather than `¥0.00`, so a missing number is not mistaken for a free one. Usage is read the same way DSH's own `token-meter` does it: both `assistant/message` and `assistant/attempt`, replaced by `(turn, step)`, with the slot cleared on a retry
 - **No balance alert**: an earlier build beeped once when the balance dropped below a hard-coded threshold. The threshold was not configurable, the feature was half-finished, and the DeepSeek console may already notify on low balance, so it was removed rather than duplicated
 
@@ -223,7 +224,7 @@ This plugin stands on other people's work:
 
 ## Version notes
 
-See [CHANGELOG.md](CHANGELOG.md). Current version **1.17.0**.
+See [CHANGELOG.md](CHANGELOG.md). Current version **1.18.0**.
 
 ## License
 

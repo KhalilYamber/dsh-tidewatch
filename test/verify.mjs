@@ -513,6 +513,45 @@ ok('客户端上报的版本号与 package.json 一致', () => {
   })
 }
 
+// ── 余额差值估算：账号内置通道不提供 usage 时的兜底（只在余额下降时累加）──
+{
+  const { testables } = loadClientPlugin()
+  const makeTracker = testables.makeBalanceTracker
+
+  ok('余额估算：只在余额下降时累加消耗', () => {
+    const tracker = makeTracker()
+    tracker.observe(50)
+    tracker.observe(47.5)
+    assert.equal(tracker.value, 2.5, '50 → 47.5 应记 2.5 元')
+  })
+
+  ok('余额估算：充值上涨不抵消已有消耗', () => {
+    const tracker = makeTracker()
+    tracker.observe(50)
+    tracker.observe(45)
+    tracker.observe(100)   // 充值
+    assert.equal(tracker.value, 5, '充值只更新基准，不应把消耗冲成负数')
+    tracker.observe(98)
+    assert.equal(tracker.value, 7, '充值后再消耗 2 元，总计 7 元')
+  })
+
+  ok('余额估算：首次读数只建立基准', () => {
+    const tracker = makeTracker()
+    assert.equal(tracker.primed, false, '未读数为未就绪')
+    tracker.observe(30)
+    assert.equal(tracker.value, 0, '首次读数不该凭空产生消耗')
+    assert.equal(tracker.primed, true, '读过后就绪')
+  })
+
+  ok('余额估算：非法读数被忽略', () => {
+    const tracker = makeTracker()
+    tracker.observe(20)
+    tracker.observe(undefined)
+    tracker.observe('abc')
+    assert.equal(tracker.value, 0, '非法值不应改变结果')
+  })
+}
+
 // ── 端到端：账号内置通道的用量走「宿主采样官方投影 → 前端计价」这条新链路 ──
 {
   const handlers = []
