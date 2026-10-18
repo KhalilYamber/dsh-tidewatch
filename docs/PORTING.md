@@ -55,6 +55,11 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
       portal 加位置测量的写法在测量时机不对时会把浮层渲染到屏幕外，这是踩过的坑。
     - **交互**：点击在 `pointerup` 里按位移判定（小于 4px 视为点击），不要依赖 `click`：
       `setPointerCapture` 会把它之后 click 的 target 改到被捕获元素，按钮的 `onClick` 就收不到点击了。
+      拖拽的 `pointermove` / `pointerup` 挂到 `window` 而不是挂件自身，否则鼠标移出挂件就断拖；
+      拖动期间要关掉 `left`/`top` 过渡，松手只在距边缘 48px 内才吸附。
+    - **气泡**：点立绘弹出漫画式对话气泡（大圆角 + 指向头顶的尖角），约 5 秒自动收起，点气泡翻页。
+      每行是模板，支持 `{phase}` / `{countdown}` / `{cost}` / `{balance}` / `{paid}` / `{bonus}` /
+      `{price}` / `{tokens}`；未知占位符原样保留，便于看出写错。
 - client 可选增强：优先 `require('@deepseek-ai/dsh-client-ui-primitives')`
   （shell 共享模块表中的 baseline 模块）取 `StateDot` / `Tag` / `Tooltip` /
   `useDismissOnOutsidePointer`，拿不到时自动退回内置实现。
