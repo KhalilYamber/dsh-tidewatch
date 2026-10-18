@@ -1,26 +1,87 @@
 # dsh-tidewatch
 
-**DeepSeek peak/off-peak tide widget**: a draggable widget parked in the bottom-right corner that tells you whether it's peak or off-peak right now, how long until the next phase, and how much this session costs.
+> A peak/off-peak tide widget for DeepSeek Harness. A little mascot parked in the bottom-right corner that tells you, at a glance, whether it's peak or off-peak right now, how long until the next switch, and how much this session has cost.
 
-- Status dot: **orange/red for peak, teal/green for off-peak**, readable at a glance
-- Collapsed: `● 峰期 距谷期 03:33 · ¥0.12` (peak, 03:33 to off-peak, ¥0.12)
-- Expanded (click to open): official peak windows (Beijing time), current tier prices, this session's token breakdown, **DeepSeek account balance**, currency switch
-- Billing: official peak/off-peak tier prices billed by the **actual timestamp of each call** (three historical eras: base / first peak schedule / V4.1 Flash repricing), cache hit/miss charged separately
-- Tier judgement: weekends, **Chinese public holidays** (built-in 2026 calendar) and the make-up working weekends are billed at off-peak prices all day
-- Currency: CNY display by default (taken verbatim from the official Chinese pricing page); one-click switch to USD (official English-page figures, 4 decimals) in the expanded panel
-- Follows the GUI light/dark theme (`--dsw-*` tokens)
-- Front end prefers the official DSH UI primitives from the shell module table (`@deepseek-ai/dsh-client-ui-primitives`): `StateDot`, `Tag`, `Tooltip` and `useDismissOnOutsidePointer`; a shell whose module table lacks that package falls back to the built-in implementation, with no functional loss
-- Account balance: read through the DSH account service (`ctx.remote.account.getBalance`), showing **paid / bonus / total** plus the reading time; the host performs the query, and the plugin never touches API keys, issues no HTTP request of its own, and persists nothing
-- Scope: the peak/off-peak tiers and cost figures apply to **DeepSeek's own models** only. With another provider (Claude / GPT / Kimi…), the badge reads "not applicable", amounts read "—", the window table and price rows stay but carry a scope note, and the balance row still reports the DeepSeek account exactly — no figure is better than a flash-price guess
-- Widget form: **pinned to the bottom-right corner and draggable**; releasing near either edge snaps it there and the position persists in localStorage; snapping left mirrors the content so it still reads inward
-- Click: a click opens a **lightweight bubble** (session cost / balance / peak phase, each toggleable from the panel); `详情 ›` opens the full panel
-- Motion and sound: amounts **roll digit by digit** when they change; clicks and the balance alert each have a **synthesized cue** (WebAudio, no audio assets, no licensing risk, switchable in the panel)
-- Low-balance alert: fires once when the balance drops below a threshold (¥10 by default) and re-arms after it recovers; threshold and switch both persist
-- Mascot art: the widget shows the community-created "Big Fat Fish" (大肥鱼) DeepSeek-girl artwork (originals under `lib/assets/mascot/`, compressed into the client bundle so it renders offline). The character is fan art and rights stay with each creator; **any rights holder can have it replaced or removed on request**
+[![Release](https://img.shields.io/github/v/release/KhalilYamber/dsh-tidewatch)](https://github.com/KhalilYamber/dsh-tidewatch/releases)
+[![License](https://img.shields.io/github/license/KhalilYamber/dsh-tidewatch)](LICENSE)
 
-## Peak windows (official basis)
+## What this is
 
-DeepSeek introduced peak/off-peak time-of-day pricing on 2026-08-17:
+Since 2026-08-17 DeepSeek bills its API on a peak/off-peak schedule: peak prices are double the off-peak ones, and weekends plus Chinese public holidays are billed off-peak all day. The same call can cost twice as much depending on the clock.
+
+`dsh-tidewatch` puts that in front of you: which tier is active, how long until it flips, and what this conversation has cost so far. Every figure is priced at **the moment each call actually happened**, so revisiting an old session never reprices it at today's rates.
+
+What it sells is a checkable definition: the peak windows, weekends, public holidays, make-up working days and all three historical price eras live in the code, backed by a full-year hour-by-hour comparison script.
+
+## Features
+
+| Area | Capability |
+|---|---|
+| **Peak windows** | Official window rules; second-by-second countdown to the next phase; weekends and Chinese public holidays billed off-peak all day; make-up working weekends likewise |
+| **Billing** | Three historical price eras (base / first peak schedule / V4.1 Flash repricing) chosen by each call's timestamp; cache hit and miss priced separately; output includes reasoning tokens |
+| **Balance** | DeepSeek account balance (paid / bonus / total) with the reading time; one alert when it drops below a threshold |
+| **Widget** | Mascot pinned to the bottom-right corner, draggable, snaps to the nearer edge on release, position persisted; a different pose for peak and off-peak |
+| **Interaction** | A click opens a summary bubble (session cost / balance / phase); `详情 ›` opens the full panel; the panel can be closed |
+| **Look** | Follows the GUI light/dark theme (`--dsw-*` tokens); reuses the official DSH UI primitives; synthesized audio cues with no audio assets |
+| **Graceful scope** | With a non-DeepSeek provider it reads "not applicable" rather than pretending a Flash price |
+
+## Install
+
+### Requirements
+
+- Node.js ≥ 20
+- A DeepSeek Harness build with the `dsh plugin` command
+- **Desktop app users**: replace `--profile web` below with `--profile desktop`, since the desktop app reads the `desktop` profile
+
+### From GitHub (recommended)
+
+```sh
+dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
+```
+
+### From a release tarball (pinned version, offline-capable)
+
+Download the latest `dsh-tidewatch-<version>.tgz` from [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases), then:
+
+```sh
+dsh plugin --profile web add ./dsh-tidewatch-1.6.6.tgz
+```
+
+### From a local checkout (live edits)
+
+```sh
+dsh plugin --profile web add link:/path/to/dsh-tidewatch
+```
+
+**Restart DSH afterwards** (the desktop app needs a full quit and relaunch; hot reload cannot refresh the client bundle). The mascot appears in the bottom-right corner.
+
+### Upgrade and removal
+
+```sh
+dsh plugin --profile web update dsh-tidewatch    # or re-run add
+dsh plugin --profile web list dsh-tidewatch      # installed version
+dsh plugin --profile web remove dsh-tidewatch    # uninstall
+```
+
+> **The npm channel is paused**: npm only holds an outdated build from 2026-08-22. Do not install it and do not judge current pricing by it.
+>
+> **This repository keeps only the current tarball**; older versions remain available on GitHub Releases.
+
+## Usage
+
+- **Click the mascot** → a summary bubble: session cost, account balance, current phase
+- **Click `详情 ›`** → the full panel: official peak window table (Beijing time), current tier prices, token breakdown, account balance, currency switch, bubble module toggles, sound switch
+- **Drag the mascot** → move it anywhere; releasing near either edge snaps it there, and the position persists in `localStorage`
+- **Click the session cost row** → per-model cost breakdown (tokens and cost per model; the total equals their sum)
+- **Close the panel** → the `✕` at its top right, the mascot itself, or anywhere outside
+
+The currency choice takes effect immediately and is remembered; CNY shows 2 decimals, USD shows 4.
+
+## How billing works
+
+### Peak windows (official basis)
+
+DeepSeek introduced peak/off-peak pricing on 2026-08-17:
 
 | Window (UTC) | Beijing time | Tier |
 |---|---|---|
@@ -29,112 +90,107 @@ DeepSeek introduced peak/off-peak time-of-day pricing on 2026-08-17:
 | 06:00 – 10:00 | 14:00 – 18:00 | peak |
 | 10:00 – next 01:00 | 18:00 – next 09:00 | off-peak |
 
-Off-peak prices are half of peak prices. The badge judges window position by the UTC hours (the official English page states them in UTC), while the weekday and public-holiday test uses Beijing calendar days (the official Chinese page anchors weekdays to Beijing time). The two readings are equivalent for the current windows: each window falls inside a single Beijing calendar day and the pair does not straddle a UTC day boundary. The table display always uses Beijing time.
+Off-peak prices are half the peak ones. The plugin judges the active tier by UTC windows (the official English page writes them in UTC hours) and judges weekdays and holidays by Beijing calendar days (the official Chinese page anchors the schedule to Beijing Monday–Friday). Both readings agree under the current windows: each window falls inside one Beijing calendar day and no pair straddles the UTC date line. The window table is always displayed in Beijing time.
 
-**Weekend and public-holiday rule**: Saturdays and Sundays are billed at off-peak prices all day (since 2026-08-23 00:00 Beijing time); Chinese public holidays are billed at off-peak prices all day with no peak/off-peak switch and no effective date (official pricing-page footnote, verified 2026-10-10: “peak hours are Monday through Friday, **excluding Chinese public holidays** … all other hours are off-peak, including weekends and Chinese public holidays in full”); make-up working weekends are off-peak all day as well (official statement of 2026-09-19: make-up working weekends and Chinese public holidays are billed at off-peak rates in full). The next phase switch lands at the first peak window of the next working day. The holiday table follows the State Council notice for 2026 (国办发明电〔2025〕7号, 33 days in total): New Year Jan 1–3, Spring Festival Feb 15–23, Qingming Apr 4–6, Labor Day May 1–5, Dragon Boat Jun 19–21, Mid-Autumn Sep 25–27, National Day Oct 1–7.
+### Three price eras
 
-## Billing model
+Prices are chosen by **the moment a call happened**, so old sessions are never repriced. Tiers read cache hit / input miss / output, in USD per 1M tokens:
 
-- Unit: USD / 1M tokens (official pricing-page basis). Cost = input-miss × cacheMiss + output × output + (cache-read + cache-write) × cacheHit; "output" already includes reasoning tokens (billed at the output rate)
-- **Three price eras**, selected by the call's own timestamp (historical correctness; tier order is cache-hit / cache-miss / output):
+| Era | Range (UTC) | deepseek-flash tiers |
+|---|---|---|
+| Base | before 2026-08-16 16:00 | 0.0028 / 0.14 / 0.28 |
+| First peak schedule | 2026-08-16 16:00 – 2026-09-10 04:00 | peak 0.014 / 0.44 / 1.32, off-peak half |
+| V4.1 Flash repricing | from 2026-09-10 04:00 | peak 0.006 / 0.3 / 1.2, off-peak half |
 
-  | Era | Range (UTC) | `deepseek-flash` tiers |
-  |---|---|---|
-  | Base price | before 2026-08-16 16:00 | 0.0028 / 0.14 / 0.28 |
-  | First peak schedule | 2026-08-16 16:00 – 2026-09-10 04:00 | peak 0.014 / 0.44 / 1.32, off-peak is half |
-  | V4.1 Flash repricing | from 2026-09-10 04:00 | peak 0.006 / 0.3 / 1.2, off-peak is half |
+Cost = input-miss × cacheMiss + output × output + (cache read + cache write) × cacheHit; output already includes reasoning tokens. The ledger is kept in USD.
 
-- Each call is billed at the tier of its **event timestamp**, so costs do not drift across a peak/off-peak switch or a repricing
-- The ledger stores USD; CNY display takes the official Chinese-page figures verbatim (default) and USD display takes the official English-page figures (4 decimals) — no cross-rate conversion
+CNY figures are taken verbatim from the official **Chinese** pricing page rather than converted: the two models' implied exchange rates differ (flash ≈ 6.67, pro ≈ 6.82), so a single rate would put pro's yuan figure about 2% below the official one.
 
-## Install
+### Weekends and public holidays
 
-> Requires Node.js ≥ 20 + DeepSeek Harness (a build with the `dsh plugin` command).
+- **Saturday and Sunday** are billed off-peak all day (official announcement: weekends no longer split into peak/off-peak and are charged at the low tier)
+- **Chinese public holidays** are off-peak all day with no peak window and no effective date (official pricing footnote: peak hours are Beijing Monday–Friday excluding Chinese public holidays; weekends and holidays are off-peak all day)
+- **Make-up working weekends** are likewise off-peak all day (official note)
+- The next switch point is the next working day's first entry into peak
 
-```sh
-# Option 1: straight from GitHub (recommended, tracks main)
-dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
+The holiday table follows the State Council's 2026 arrangement (33 days): New Year 1/1–1/3, Spring Festival 2/15–2/23, Qingming 4/4–4/6, Labour Day 5/1–5/5, Dragon Boat 6/19–6/21, Mid-Autumn 9/25–9/27, National Day 10/1–10/7.
 
-# Option 2: link a local checkout (source edits take effect immediately)
-dsh plugin --profile web add link:/path/to/dsh-tidewatch
+## Compatibility
 
-# Option 3: from a Release tarball (pinned version, works offline)
-#   download dsh-tidewatch-<version>.tgz from the Releases page (1.1.9 at present), then:
-dsh plugin --profile web add ./dsh-tidewatch-1.1.9.tgz
+| Item | Notes |
+|---|---|
+| DSH | 0.1.7-rc.2 and newer; adapted to 0.2.0 |
+| Models | Peak tiers and amounts only hold for **DeepSeek's own models**; with another provider the amount reads "not applicable" |
+| Official UI primitives | Prefers `@deepseek-ai/dsh-client-ui-primitives` from the shell module table, falling back to built-in implementations when absent |
+| Theme | Follows the GUI light/dark theme |
+| Data boundary | Balance queries run through the DSH host; the plugin never touches API keys, issues no HTTP request of its own and persists nothing |
+
+Model aliases: `deepseek-flash` (V4.1 Flash) is current; `deepseek-v4-flash`, `deepseek-v4-flash-vision-exp` and `deepseek-v4.1-flash` are billed at the current Flash price.
+
+## How it works
+
+```
+usage block of each model call (assistant/message, the only event carrying usage today)
+        │  lib/index.js: costUsage session projection (zod schema validated)
+        ▼
+  token buckets + USD cost (tier chosen at the event's timestamp)
+        │  useProjection('costUsage') (browser side)
+        ▼
+  lib/client.js: widget rendering (mascot + countdown)
 ```
 
-> **Only the current tarball lives in this repository**: the historical builds (0.1.0 – 1.1.9) have been archived out of the tree, leaving `dsh-tidewatch-1.1.9.tgz`. Older builds carry the billing defect that pinned the card cost at ¥0.00 — do not install them.
+The widget registers on DSH's root overlay slot `shell.overlay`; its data comes from a probe registered on `conversation.composer.dock`, handed over through a module-level bridge, because root slots have no projection seat.
 
-> **The npm channel is paused**: npm hosts only an old copy (1.0.6, published 2026-08-22) whose prices and rules are outdated. Do not install it or judge current billing from it — use the two options above.
-
-Restart `dsh web` after installing; the tide badge joins the stats row below the composer.
-
-### Upgrade and uninstall
-
-```sh
-dsh plugin --profile web update dsh-tidewatch    # or re-run the add above
-dsh plugin --profile web list dsh-tidewatch      # installed version
-dsh plugin --profile web remove dsh-tidewatch    # uninstall
-```
-
-> **v1.1.9 holiday boundary removed**: the official holiday rule carries no effective date — "make-up working weekends and Chinese public holidays are billed at off-peak rates in full" applies unconditionally. Previous builds kept a self-imposed "holiday rule effective 2026-09-19", which made 91 hours of 2026 (peak-window moments on New Year, Spring Festival, Qingming, Labor Day and Dragon Boat holidays) read as peak working days, contradicting the official wording. This release drops that boundary so the holiday rule applies unconditionally. **Billing impact is zero**: all 91 hours fall before peak/off-peak pricing took effect (2026-08-17), where calls are billed at the era's base price and the peak/off-peak tier never participates; measured cost is 0.4200 USD either way. The projection stateVersion is unchanged, so no session replay on upgrade, and the UI only shows these past days as off-peak when reviewing them.
->
-> **v1.1.8 tier-definition refresh**: re-verified the peak/off-peak definition against the official pages (Chinese page, English page and changelog, checked 2026-10-10) and landed three fixes. ① The official basis is now spelled out: the Chinese page anchors weekdays to Beijing time while the English page writes the windows in UTC, and for the current windows (UTC 01:00–04:00 / 06:00–10:00) the two readings are equivalent — each window sits inside one Beijing calendar day and the pair does not straddle a UTC day boundary. The weekday test therefore reads Beijing calendar days (it previously read the UTC weekday; the numbers happen to agree, so behaviour is unchanged — see the Beijing-boundary assertions in the self-check). ② The make-up working weekend rule is now stated in comments and in the panel copy (official statement of 2026-09-19: make-up working weekends and Chinese public holidays are billed off-peak in full), so a make-up working weekend stays off-peak all day rather than becoming a working day. ③ CNY display now takes the official Chinese-page figures verbatim: the two models carry different implied rates (flash ≈ 6.67, pro ≈ 6.82) and the previous single 6.67 rate understated pro by roughly 2% in CNY. **Billing math still uses the exact USD figures, historical bills are not recomputed**, and the projection stateVersion is unchanged, so no session replay on upgrade.
->
-> **v1.1.6 holiday rule**: the official pricing-page footnote (verified 2026-09-19) states that peak hours are Monday through Friday, excluding Chinese public holidays, with weekends and public holidays off-peak in full. This release adds the 2026 Chinese public-holiday calendar (State Council notice) to tier judgement and billing: the upcoming Mid-Autumn Sep 25–27 and National Day Oct 1–7 are billed at off-peak rates all day. **Prices are unchanged from 1.1.5 (no official repricing this round)**; no stateVersion bump — no public holiday falls before the rule boundary (2026-09-19), so persisted sessions need no replay.
->
-> **Upgrading to v1.1.1**: billing now selects the tier from three price eras by call timestamp, and the `costUsage` projection moved to stateVersion 4. Persisted sessions replay once after the upgrade, so calls made between 2026-08-16 and 2026-09-10 are restored to the **first** peak schedule (they were previously billed at the newer, lower rates). Live billing is unaffected.
-
-## Usage
-
-- The badge mounts on the official composer dock slot `conversation.composer.dock` — the same slot the stats pills and the context meter use — so it renders inline in the row below the composer, beside the `48 轮 403 步` / `cache hit xx%` entries; spacing, vertical alignment and narrow-screen wrapping all come from the host layout, and the plugin overrides none of it
-- Click the badge to expand/collapse the detail panel: windows, current tier prices, token breakdown, currency switch (¥ / $)
-- Click the "Session cost" row to expand the **per-model cost breakdown** (each model's tokens and cost listed separately; the total equals the sum of per-model costs)
-- Currency choice applies immediately and persists; CNY shows 2 decimals, USD 4 decimals
-
-## Layout
+### Layout
 
 ```
 dsh-tidewatch
-├── package.json          # dsh.bundle.patch + dsh.client.platform manifest
-├── cordis.patch.yml      # bundle patch row
-├── scripts/build.sh      # build: syntax check + zod junction
 ├── lib/
-│   ├── pricing.js        # pure functions: windows, isPeakHour/peakPhaseAt, three price eras, holiday table, costOf
-│   ├── index.js          # host: costUsage session projection (billed per event time)
-│   └── client.js         # browser: badge (__ModuleLoader__ bundle)
-├── docs/PORTING.md       # adaptation notes for other hosts
-└── test/verify.mjs       # pure-module self-test (node test/verify.mjs, 52 checks)
+│   ├── pricing.js        # pure functions: windows, price eras, holidays, costOf
+│   ├── index.js          # host: costUsage session projection
+│   ├── client.js         # browser: widget and panel (__ModuleLoader__ bundle)
+│   └── assets/mascot/    # mascot originals (compressed into the bundle)
+├── cordis.patch.yml      # assembly row
+├── docs/PORTING.md       # porting notes for other hosts
+└── test/
+    ├── verify.mjs        # full self-check entry point
+    ├── client-fixture.mjs# front-end fixture: loads the real lib/client.js in a fake React env
+    ├── adapt-repro.mjs   # host billing regression
+    └── ownership-repro.mjs # front-end ownership regression
 ```
 
-## Data flow
-
-```
-model-call usage blocks (assistant/chunk, assistant/message events)
-        │  lib/index.js: costUsage session projection (zod-schema validated)
-        ▼
-  token buckets + USD cost (per-event-time peak/off-peak tier)
-        │  useProjection('costUsage') (browser)
-        ▼
-  lib/client.js: badge rendering (per-second countdown + FX conversion)
-```
-
-## Develop & verify
+## Development
 
 ```sh
-DSH_CHECKOUT=<harness source root> bash scripts/build.sh   # syntax check + zod junction
-node test/verify.mjs                                       # peak math & billing self-test (52 checks, incl. dual-constant consistency)
+# build (syntax check + zod dependency junction)
+DSH_CHECKOUT=<harness source root> bash scripts/build.sh
+
+# full self-check: peak math, dual-constant parity, billing regression, ownership regression
+node test/verify.mjs
 ```
+
+Under Git Bash, `DSH_CHECKOUT` must use a **Windows-style** path (e.g. `D:/DeepSeek-Harness/...`): a `/d/...` path is resolved by Node as `D:\d\...` and produces a dangling junction, which breaks assembly on the next launch for link-installed plugins. The script validates the resolved target before replacing the link.
 
 ## Known limitations
 
-- Prices are built in, covering three eras (base price / first peak schedule / V4.1 Flash repricing); V4-Pro uses the official 2026-08-17 rates; per footnote (2) on the official pricing page and the changelog entry of 2026-09-10, V4 Pro keeps being served after 2026-09-14 **with its billing method unchanged** (further notice to follow if that changes), so pro is always billed on its own rates and `V4_PRO_RETIRE_BOUNDARY` stays a sentinel pending an official date. **When the official prices change, update both `lib/pricing.js` (billing) and the `DISPLAY_PRICES` constant in `lib/client.js` (display) manually, and keep the superseded tiers as another historical era**
-- Model names: `deepseek-flash` is current (V4.1 Flash); the aliases `deepseek-v4-flash`, `deepseek-v4-flash-vision-exp` and `deepseek-v4.1-flash` are all billed at the current flash rate (see `MODEL_ALIASES`)
-- Windows are read as UTC hours (the official English page states them that way); the weekday and holiday test reads Beijing calendar days (UTC+8), equivalent for the current windows; weekends, Chinese public holidays and make-up working weekends are off-peak all day — the holiday table covers 2026 (State Council notice), so **once the 2027 calendar is published you must sync `CN_PUBLIC_HOLIDAYS` by hand** (both `lib/pricing.js` and `lib/client.js`)
-- Costs are computed in USD; CNY display uses the official Chinese-page figures and USD display the official English-page figures, with no cross-rate conversion
+- **Price table is built in**; after an official price change, update both `lib/pricing.js` (billing) and `DISPLAY_PRICES` in `lib/client.js` (display), and add a historical era for the old prices
+- **Holiday table covers 2026 only**; the 2027 arrangement needs to be added to `CN_PUBLIC_HOLIDAYS` (both files) once published
+- **The V4 Pro repricing boundary** is a sentinel for now: the official statement says billing is unchanged; if that changes, fill the date back into `V4_PRO_RETIRE_BOUNDARY`
+- **Failed or retried calls are not billed**, matching the official token-meter definition; that is the ceiling of the definition, not an omission
 
-## Credits & license
+## Acknowledgements
 
-The peak math (isPeakHour / peakPhaseAt / tierFor / costOf) and the session-projection structure are adapted from [dsh-cost-meter](https://github.com/Han-1413141/dsh-cost-meter) (MIT License), rewritten for a minimal footprint.
+This plugin stands on other people's work:
+
+- **[dsh-cost-meter](https://github.com/Han-1413141/dsh-cost-meter)** (MIT) — the starting point for the peak math (`isPeakHour` / `peakPhaseAt` / `tierFor` / `costOf`) and the session-projection structure; rewritten here against a smaller goal.
+- **[DeepSeek-Balance-Whale-Widget](https://github.com/MeteorNOX/DeepSeek-Balance-Whale-Widget)** (MIT) — the reference for the widget's product form: bottom-right placement, click-to-open bubble, audio cues and low-balance alerts were modelled on it. Its code and this plugin's are independent; nothing was imported.
+- **The "Big Fat Fish" (大肥鱼) mascot** — a community personification of DeepSeek's whale mark, spread from the Baidu deepseek forum; the original OC "溟月" was established by community creator 上善无形, and the art used here comes from Xiaohongshu creators, stored under `lib/assets/mascot/`. Rights stay with each creator; **any rights holder can have it replaced or removed on request**.
+- **[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)** — the host this runs on; state dots, tags, tooltips and outside-dismiss behaviour reuse its official UI primitives.
+
+## Version notes
+
+See [CHANGELOG.md](CHANGELOG.md). Current version **1.6.6**.
+
+## License
 
 [MIT](LICENSE) © 2026 KhalilYamber
