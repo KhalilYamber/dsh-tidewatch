@@ -2,6 +2,15 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
 
+## [1.17.0] - 2026-10-18
+
+### 新增
+
+- **气泡第 2 页显示用量诊断**：格式为 `诊断 事件 m/a · 带用量 N · 官方 有/无`。之前诊断藏在面板最底部不易发现，现在点一下气泡就能看到，用来判断用量究竟断在哪一环
+  - `m/a` = 收到的 `assistant/message` / `assistant/attempt` 条数
+  - `带用量 N` = 其中真正携带 usage 的条数
+  - `官方 有/无` = 宿主采样的官方 `tokenUsage` 是否有值
+
 ## [1.16.0] - 2026-10-18
 
 ### 变更（架构）
