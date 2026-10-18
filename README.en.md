@@ -26,6 +26,8 @@ What it sells is a checkable definition: the peak windows, weekends, public holi
 | **Editor** | The panel carries a bubble editor: add or remove pages and lines, edit templates, **reorder by dragging** (or use the arrows), a **module library** (`☆` saves a line, one click inserts it), restore the defaults |
 | **Bubble tricks** | `A \|\| B` in a line picks one at random; a line starting with `img:https://…` renders as an image |
 | **Look** | Follows the GUI light/dark theme (`--dsw-*` tokens); reuses the official DSH UI primitives; synthesized audio cues with no audio assets |
+| **Account provider** | DeepSeek account sign-in reports no usage, so the session cost is estimated from the balance drop and marked "estimate"; every other provider keeps exact token-based pricing |
+| **Diagnostics** | The second bubble page carries one line of usage diagnostics (settlement events seen, how many carried usage, whether the official projection is reachable) |
 | **Graceful scope** | With a non-DeepSeek provider it reads "not applicable" rather than pretending a Flash price |
 
 ## Install
@@ -157,10 +159,13 @@ Model aliases: `deepseek-flash` (V4.1 Flash) is current; `deepseek-v4-flash`, `d
 ## How it works
 
 ```
-usage block of each model call (assistant/message, the only event carrying usage today)
+usage block of each model call (assistant/message and assistant/attempt)
         │  lib/index.js: costUsage session projection (zod schema validated)
         ▼
   token buckets + USD cost (tier chosen at the event's timestamp)
+        │  the same view also carries two more fields:
+        │    · official: the host's sample of the official tokenUsage projection
+        │    · diag: usage diagnostic counters
         │  useProjection('costUsage') (browser side)
         ▼
   lib/client.js: widget rendering (mascot + countdown)
@@ -208,8 +213,8 @@ Under Git Bash, `DSH_CHECKOUT` must use a **Windows-style** path (e.g. `D:/DeepS
 - **Holiday table covers 2026 only**; the 2027 arrangement needs to be added to `CN_PUBLIC_HOLIDAYS` (both files) once published
 - **The V4 Pro repricing boundary** is a sentinel for now: the official statement says billing is unchanged; if that changes, fill the date back into `V4_PRO_RETIRE_BOUNDARY`
 - **Failed or retried calls are not billed**, matching the official token-meter definition; that is the ceiling of the definition, not an omission
-- **The account provider is priced from the official projection**: the plugin's own projection gets no usage on that provider, so the host listens to `session/event` and samples DSH's `tokenUsage` via `sessionProjections.snapshot(session, ['tokenUsage'])` (the source of the "351M tok · 97% cache hit" line), ships it with the projection view, and the browser prices those tokens with this plugin's table. Trade-offs: those sessions bill at the *current* tier, and only the latest sample is kept, so with several concurrent sessions the foreground one wins
-- **The account provider's cost is an estimate**: that provider reports no usage, so the plugin estimates this session's cost from how much the balance dropped, and marks the amount "estimate". The balance is account-wide, so concurrent sessions or devices on the same account all draw it down and the estimate runs high — that is the ceiling of the method, not a defect
+- **The account provider's cost comes from the balance drop**: that provider reports no usage to the session events, so both token paths come up empty. The plugin then estimates this session's cost from how much the account balance dropped and marks the amount "estimate". The balance is account-wide, so concurrent sessions or devices draw it down together and the estimate runs high; only drops are accumulated, and a top-up never cancels spend already observed. The estimate applies only to the account provider when no token data exists
+- **Two trade-offs in sampling the official projection**: the host reads DSH's `tokenUsage` projection through `sessionProjections.snapshot(session, ['tokenUsage'])` (the source of the "351M tok · 97% cache hit" line) and ships it with the view. That projection exposes a running total only, so this path bills at the *current* tier rather than each call's historical tier, and only the latest sample is kept, so with several concurrent sessions the foreground one wins
 - **Missing usage is labelled, never zeroed**: a provider may omit usage from its settlement events; the UI then shows "not reported" rather than `¥0.00`, so a missing number is not mistaken for a free one. Usage is read the same way DSH's own `token-meter` does it: both `assistant/message` and `assistant/attempt`, replaced by `(turn, step)`, with the slot cleared on a retry
 - **No balance alert**: an earlier build beeped once when the balance dropped below a hard-coded threshold. The threshold was not configurable, the feature was half-finished, and the DeepSeek console may already notify on low balance, so it was removed rather than duplicated
 
