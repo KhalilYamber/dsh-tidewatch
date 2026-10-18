@@ -443,6 +443,16 @@ ok('投影：中转 provider 但模型名可识别时照常计费', () => {
   assert.ok(Math.abs(view.cost - CALL_COST) < 1e-9, `实得 ${view.cost}`)
 })
 
+ok('客户端上报的版本号与 package.json 一致', () => {
+  // clientVersion() 是浏览器 bundle 里唯一的版本字面量（无法在运行时读 package.json），
+  // 发版时容易漏改。这条断言把它钉在 package.json 的 version 上。
+  const src = readFileSync(join(libDir, 'client.js'), 'utf8')
+  const m = /function clientVersion\(\)[\s\S]{0,400}?return '([0-9]+\.[0-9]+\.[0-9]+)'/.exec(src)
+  assert.ok(m !== null, 'client.js 未找到 clientVersion 的版本字面量')
+  const pkg = JSON.parse(readFileSync(join(libDir, '..', 'package.json'), 'utf8'))
+  assert.equal(m[1], pkg.version, `clientVersion=${m[1]}，package.json=${pkg.version}`)
+})
+
 // ── 归属判据回归（加载真实 lib/client.js，驱动会话切换序列）──────────────
 const ownership = runOwnershipChecks()
 for (const [status, name] of ownership.results) {
