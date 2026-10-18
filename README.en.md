@@ -21,7 +21,7 @@ What it sells is a checkable definition: the peak windows, weekends, public holi
 | **Billing** | Three historical price eras (base / first peak schedule / V4.1 Flash repricing) chosen by each call's timestamp; cache hit and miss priced separately; output includes reasoning tokens |
 | **Balance** | DeepSeek account balance (paid / bonus / total) with the reading time |
 | **Widget** | Mascot pinned to the bottom-right corner, draggable, snaps to the nearer edge on release, position persisted; a different pose for peak and off-peak |
-| **Bubble** | Clicking the mascot pops a comic-style speech bubble (large radius, tail pointing at the head) that fades out after a few seconds; **a click on the bubble turns the page** — page 1 covers phase and balance, page 2 this session's cost |
+| **Bubble** | Clicking the mascot pops a comic-style speech bubble (large radius, tail pointing at the head); **a click on the bubble turns the page**. It goes away in exactly two ways: it fades out after about five seconds, or a click anywhere outside the widget dismisses it |
 | **Interaction** | Clicking the mascot opens the bubble; clicking the bubble turns the page; the full panel opens from `详情 ›` inside the bubble |
 | **Editor** | The panel carries a bubble editor: add or remove pages and lines, edit templates, **reorder by dragging** (or use the arrows), a **module library** (`☆` saves a line, one click inserts it), restore the defaults |
 | **Bubble tricks** | `A \|\| B` in a line picks one at random; a line starting with `img:https://…` renders as an image |
@@ -47,7 +47,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 Download the latest `dsh-tidewatch-<version>.tgz` from [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases), then:
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.11.2.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.12.0.tgz
 ```
 
 ### From a local checkout (live edits)
@@ -72,7 +72,7 @@ dsh plugin --profile web remove dsh-tidewatch    # uninstall
 
 ## Usage
 
-- **Click the mascot** → the bubble appears; clicking the bubble turns to the next page; it collapses by itself after about five seconds
+- **Click the mascot** → the bubble appears (clicking again never hides it, it only resets the timer); **clicking the bubble** turns to the next page; it fades out after about five seconds, and **a click outside the widget** dismisses it too
 - **Click `详情 ›` inside the bubble** → the full panel
 - **Click `详情 ›` in the bubble** → the full panel: official peak window table (Beijing time), current tier prices, token breakdown, account balance, currency switch, bubble sweep toggles, sound switch
 - **Drag the mascot** → move it anywhere; releasing near either edge snaps it there, and the position persists in `localStorage`
@@ -198,7 +198,7 @@ This plugin stands on other people's work:
 
 ## Version notes
 
-See [CHANGELOG.md](CHANGELOG.md). Current version **1.11.2**.
+See [CHANGELOG.md](CHANGELOG.md). Current version **1.12.0**.
 
 ## License
 
