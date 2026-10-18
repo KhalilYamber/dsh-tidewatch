@@ -2,6 +2,13 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
 
+## [1.11.1] - 2026-10-18
+
+### 修复
+
+- **编辑器里拖不动页与行**：挂件外层的 `pointerdown` 调用了 `preventDefault`（防拖立绘时选中文字），它会连带阻止面板内 `draggable` 元素的 HTML5 拖放启动。现在 `pointerdown` 先判断点击是否落在面板内，是则放行不改默认行为
+- 页与行左侧的 `⠿` 就是拖拽把手；↑ ↓ 箭头仍可用
+
 ## [1.11.0] - 2026-10-18
 
 ### 新增
