@@ -1,6 +1,6 @@
 # dsh-tidewatch
 
-**DeepSeek peak/off-peak tide badge**: a floating badge beside the composer that tells you whether it's peak or off-peak right now, how long until the next phase, and how much this session costs.
+**DeepSeek peak/off-peak tide badge**: a badge docked in the stats row below the composer that tells you whether it's peak or off-peak right now, how long until the next phase, and how much this session costs.
 
 - Status dot: **orange/red for peak, teal/green for off-peak**, readable at a glance
 - Collapsed: `● 峰期 距谷期 03:33 · ¥0.12` (peak, 03:33 to off-peak, ¥0.12)
@@ -62,7 +62,7 @@ dsh plugin --profile web add ./dsh-tidewatch-1.1.9.tgz
 
 > **The npm channel is paused**: npm hosts only an old copy (1.0.6, published 2026-08-22) whose prices and rules are outdated. Do not install it or judge current billing from it — use the two options above.
 
-Restart `dsh web` after installing; the tide badge appears to the right of the composer.
+Restart `dsh web` after installing; the tide badge joins the stats row below the composer.
 
 ### Upgrade and uninstall
 
@@ -82,7 +82,7 @@ dsh plugin --profile web remove dsh-tidewatch    # uninstall
 
 ## Usage
 
-- The badge sits **inline in the official stats row below the composer**, right after the `cache hit xx%` pill (horizontal spacing and vertical alignment come from that row's own layout, so window resizing cannot misalign it); when the stats row is absent (older shell, or a session without token stats yet) it falls back to floating at the composer's right edge
+- The badge mounts on the official composer dock slot `conversation.composer.dock` — the same slot the stats pills and the context meter use — so it renders inline in the row below the composer, beside the `48 轮 403 步` / `cache hit xx%` entries; spacing, vertical alignment and narrow-screen wrapping all come from the host layout, and the plugin overrides none of it
 - Click the badge to expand/collapse the detail panel: windows, current tier prices, token breakdown, currency switch (¥ / $)
 - Click the "Session cost" row to expand the **per-model cost breakdown** (each model's tokens and cost listed separately; the total equals the sum of per-model costs)
 - Currency choice applies immediately and persists; CNY shows 2 decimals, USD 4 decimals

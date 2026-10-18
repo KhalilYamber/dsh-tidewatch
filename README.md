@@ -1,6 +1,6 @@
 # dsh-tidewatch
 
-**DeepSeek 峰谷时刻悬浮徽章**：一张悬浮在输入框旁的潮汐卡，告诉你此刻是峰期还是谷期、距下一阶段还有多久、本次会话花了多少钱。
+**DeepSeek 峰谷时刻徽章**：一枚挂在输入框下方统计行里的潮汐胶囊，告诉你此刻是峰期还是谷期、距下一阶段还有多久、本次会话花了多少钱。
 
 - 状态点：**峰期橙红 / 谷期蓝绿**，一眼可辨
 - 折叠态：`● 峰期 距谷期 03:33 · ¥0.12`
@@ -87,7 +87,7 @@ dsh plugin --profile web remove dsh-tidewatch    # 卸载
 
 ## 使用
 
-- 徽章**内联在输入框下方的官方统计行里**，紧贴「缓存命中 xx%」右侧整齐并列（水平间距与垂直对齐都由该行自身的布局给出，窗口缩放不会错位）；官方统计行尚未渲染时（旧版 shell，或会话尚无 token 统计）回退为输入框右侧的浮动定位
+- 徽章**注册在官方输入框停靠插槽 `conversation.composer.dock`**（官方统计行 `StatsPills` 与 `ContextMeter` 同槽），渲染进输入框下方那条 flex 行，与「48 轮 403 步」「缓存命中 xx%」等条目并列；间距、垂直对齐与窄屏换行全部由官方布局给出，插件不覆盖其样式，也不做 DOM 探测
 - 点击徽章展开/收起详情面板：时段表、当前档位价格、Token 明细、币种切换（¥ / $）
 - 点击「本次会话费用」行可展开**分模型花费明细**（各模型的 token 与花费分别列出，合计 = 分模型之和）
 - 币种选择即时生效并记住；人民币 2 位小数，美元 4 位小数
@@ -102,7 +102,7 @@ dsh-tidewatch
 ├── lib/
 │   ├── pricing.js        # 纯函数：峰谷窗口、isPeakHour/peakPhaseAt、三段价格时代、节假日表、costOf
 │   ├── index.js          # 宿主：costUsage 会话投影（按事件时刻计费）
-│   └── client.js         # 前端：悬浮徽章（__ModuleLoader__ bundle）
+│   └── client.js         # 前端：统计行胶囊（__ModuleLoader__ bundle）
 ├── docs/PORTING.md       # 移植到其他宿主的适配说明
 ├── test/
 │   ├── verify.mjs         # 全套自检入口（node test/verify.mjs）
@@ -120,7 +120,7 @@ dsh-tidewatch
   token 桶 + 美元成本（按事件时刻峰谷档位）
         │  useProjection('costUsage')（浏览器端）
         ▼
-  lib/client.js：悬浮徽章渲染（秒级倒计时 + 汇率换算显示）
+  lib/client.js：统计行胶囊渲染（秒级倒计时 + 汇率换算显示）
 ```
 
 ## 开发与验证

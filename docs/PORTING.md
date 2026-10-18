@@ -47,14 +47,14 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
 
 ### 3. 完整：按 DSH 原样
 - host：`ctx.inject(['sessionProjections'])` 注册 `costUsage` 投影（lib/index.js）
-- client：**两个插槽席位，职责不同**——
-  - `conversation.composer.dock`（session 作用域）挂数据探针 `Probe`，渲染 null，
-    只为拿到 `useProjection` 席位并把投影值写进模块级 bridge；
-  - `shell.overlay`（root 作用域）挂徽章 `TideCard`，从 bridge 读值渲染
-    （root 级插槽没有投影席位，这是需要两个组件的原因）。`TideCard` 把折叠态
-    胶囊 portal 进官方统计行 `[data-composer-stats]`（ui-chat 的 StatsPills 根元素，
-    flex + gap 12px + 整体居中），与官方 pill 严格并列；展开面板宽度放不进行内，
-    portal 到 body 并锚定胶囊右缘上方。统计行不存在时回退为输入框右侧的浮动定位。
+- client：**一个插槽、两个条目**
+  - `conversation.composer.dock`（session 作用域）同时挂：
+    - 数据探针 `Probe`：渲染 null，只负责把 `useProjection('costUsage')` 的值写进模块级 bridge；
+    - 徽章 `TideCard`：从 bridge 读值，把胶囊直接渲染成行内元素。
+    官方 `StatsPills`（会话统计）与 `ContextMeter` 也注册在这个插槽上——宿主把同槽条目渲染进
+    输入框下方同一条 flex 行，所以胶囊与官方条目天然并列：间距、垂直对齐与窄屏换行全由官方
+    布局决定，插件不覆盖官方样式，也不做任何 DOM 探测。展开面板宽度放不进行内，portal 到
+    body 并锚定胶囊上方。
 - client 可选增强：优先 `require('@deepseek-ai/dsh-client-ui-primitives')`
   （shell 共享模块表中的 baseline 模块）取 `StateDot` / `Tag` / `Tooltip` /
   `useDismissOnOutsidePointer`，拿不到时自动退回内置实现。
@@ -71,7 +71,7 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
 |---|---|---|
 | `sessionProjections.register` | 会话级事件折叠（request/header、assistant/message 的 usage） | 宿主自己的流式事件钩子 |
 | `useProjection('costUsage')` | 前端订阅投影视图 | 状态管理 / 订阅式 store |
-| `conversation.composer.dock` / `shell.overlay` 插槽 | 数据探针位 / 根级浮层位 | 输入区附近的容器节点 + 全局浮层 |
+| `conversation.composer.dock` 插槽 | 输入框下方停靠行（session 作用域，带投影席位） | 输入区下方的一条 flex 行 |
 | `@deepseek-ai/dsh-client-ui-primitives` | 官方共享 UI 原语（模块表 baseline） | 宿主自有控件库，或本插件的内置实现 |
 | `ctx.remote.account.getBalance` | 读取账户余额（充值 / 礼金 / 合计），**查询由宿主执行** | 宿主自有账户接口，或自行调用官方 `/user/balance`（此时密钥要自己管） |
 | `--dsw-*` CSS 变量 | 主题跟随 | 宿主主题变量或硬编码双主题 |
