@@ -85,6 +85,8 @@ const FakeReact = {
     if (firstRun) pendingCleanups.push(record)
   },
   useCallback: fn => fn,
+  // useMemo 只用来缓存随机并列的抽取结果；测试桩按「立即求值」处理即可。
+  useMemo: fn => fn(),
   useRef: init => mkHook({ current: init }).value,
 }
 
