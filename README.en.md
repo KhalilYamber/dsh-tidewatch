@@ -47,7 +47,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 Download the latest `dsh-tidewatch-<version>.tgz` from [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases), then:
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.14.4.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.15.0.tgz
 ```
 
 ### From a local checkout (live edits)
@@ -185,6 +185,7 @@ Under Git Bash, `DSH_CHECKOUT` must use a **Windows-style** path (e.g. `D:/DeepS
 - **Holiday table covers 2026 only**; the 2027 arrangement needs to be added to `CN_PUBLIC_HOLIDAYS` (both files) once published
 - **The V4 Pro repricing boundary** is a sentinel for now: the official statement says billing is unchanged; if that changes, fill the date back into `V4_PRO_RETIRE_BOUNDARY`
 - **Failed or retried calls are not billed**, matching the official token-meter definition; that is the ceiling of the definition, not an omission
+- **The account provider is priced from the official projection**: when the plugin's own projection has no usage it falls back to DSH's `tokenUsage` (the source of the "351M tok · 97% cache hit" line in the composer bar) and prices it with this plugin's table. The trade-off is that those sessions are billed at the *current* tier rather than the tier in force when each call happened
 - **Missing usage is labelled, never zeroed**: a provider may omit usage from its settlement events; the UI then shows "not reported" rather than `¥0.00`, so a missing number is not mistaken for a free one. Usage is read the same way DSH's own `token-meter` does it: both `assistant/message` and `assistant/attempt`, replaced by `(turn, step)`, with the slot cleared on a retry
 - **No balance alert**: an earlier build beeped once when the balance dropped below a hard-coded threshold. The threshold was not configurable, the feature was half-finished, and the DeepSeek console may already notify on low balance, so it was removed rather than duplicated
 
@@ -199,7 +200,7 @@ This plugin stands on other people's work:
 
 ## Version notes
 
-See [CHANGELOG.md](CHANGELOG.md). Current version **1.14.4**.
+See [CHANGELOG.md](CHANGELOG.md). Current version **1.15.0**.
 
 ## License
 
