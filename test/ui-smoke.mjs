@@ -65,7 +65,7 @@ ${CSS}
   <div class="tw-bubble-pop" id="bubble">
     <div class="tw-bubble-row"><span class="tw-bubble-label">本次会话</span><span class="tw-bubble-val">¥16.71</span></div>
     <div class="tw-bubble-row"><span class="tw-bubble-label">余额</span><span class="tw-bubble-val">¥16.71</span></div>
-    <div class="tw-bubble-row"><span class="tw-bubble-label">谷期</span><span class="tw-bubble-val">距峰期 17:45</span></div>
+    <div class="tw-bubble-row"><span class="tw-bubble-label">谷期</span><span class="tw-bubble-val" id="countdown">距峰期 17:45:23</span></div>
     <button class="tw-bubble-more">详情 ›</button>
   </div>
 </div>
@@ -194,6 +194,8 @@ async function main() {
       })()`)
       const t = JSON.parse(toggled)
       check('泡泡可显隐（DOM 可切换）', t.before && t.hidden, JSON.stringify(t))
+      const cd = await evaluate("document.getElementById('countdown').textContent")
+      check('倒计时为 时:分:秒', /^距峰期 \d{2,}:\d{2}:\d{2}$/.test(cd), cd)
     })
   } finally {
     proc.kill()
