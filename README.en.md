@@ -21,7 +21,8 @@ What it sells is a checkable definition: the peak windows, weekends, public holi
 | **Billing** | Three historical price eras (base / first peak schedule / V4.1 Flash repricing) chosen by each call's timestamp; cache hit and miss priced separately; output includes reasoning tokens |
 | **Balance** | DeepSeek account balance (paid / bonus / total) with the reading time |
 | **Widget** | Mascot pinned to the bottom-right corner, draggable, snaps to the nearer edge on release, position persisted; a different pose for peak and off-peak |
-| **Interaction** | A click opens a summary bubble (session cost / balance / phase); `详情 ›` opens the full panel; the panel can be closed |
+| **Bubble** | A speech bubble above the mascot shows session cost / balance / phase at all times; it can be hidden or narrowed per module from the panel |
+| **Interaction** | Clicking the mascot toggles the full panel; `✕` at its top right or a click outside closes it; clicks and drags carry a synthesized cue (switchable) |
 | **Look** | Follows the GUI light/dark theme (`--dsw-*` tokens); reuses the official DSH UI primitives; synthesized audio cues with no audio assets |
 | **Graceful scope** | With a non-DeepSeek provider it reads "not applicable" rather than pretending a Flash price |
 
@@ -44,7 +45,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 Download the latest `dsh-tidewatch-<version>.tgz` from [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases), then:
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.7.1.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.8.0.tgz
 ```
 
 ### From a local checkout (live edits)
@@ -69,8 +70,9 @@ dsh plugin --profile web remove dsh-tidewatch    # uninstall
 
 ## Usage
 
-- **Click the mascot** → a summary bubble: session cost, account balance, current phase
-- **Click `详情 ›`** → the full panel: official peak window table (Beijing time), current tier prices, token breakdown, account balance, currency switch, bubble module toggles, sound switch
+- **The bubble above the mascot** always shows session cost, account balance and the current phase (hideable from the panel)
+- **Click the mascot** → toggles the full panel
+- **Click `详情 ›` in the bubble** → the full panel: official peak window table (Beijing time), current tier prices, token breakdown, account balance, currency switch, bubble sweep toggles, sound switch
 - **Drag the mascot** → move it anywhere; releasing near either edge snaps it there, and the position persists in `localStorage`
 - **Click the session cost row** → per-model cost breakdown (tokens and cost per model; the total equals their sum)
 - **Close the panel** → the `✕` at its top right, the mascot itself, or anywhere outside
@@ -194,7 +196,7 @@ This plugin stands on other people's work:
 
 ## Version notes
 
-See [CHANGELOG.md](CHANGELOG.md). Current version **1.7.1**.
+See [CHANGELOG.md](CHANGELOG.md). Current version **1.8.0**.
 
 ## License
 
