@@ -180,8 +180,12 @@ export function costTextOf(node) {
   }
   if (typeof node !== 'object' || node.$el !== true) return null
   const cls = typeof node.props.className === 'string' ? node.props.className : ''
-  const isCostNode = cls.includes('tw-cost') || cls.includes('tw-mascot-badge')
-  if (node.type === 'span' && isCostNode) {
+  // v1.6.2 起挂件上不再显示金额：改读挂件按钮的 data-cost（金额本身在泡泡与面板里）。
+  if (node.type === 'button' && cls.includes('tw-mascot')) {
+    const cost = node.props['data-cost']
+    if (typeof cost === 'string' && cost.length > 0) return cost
+  }
+  if (node.type === 'span' && cls.includes('tw-cost')) {
     const child = node.children[0]
     // 金额是 RollingNumber 组件（数字滚动动画），文本在它的 props.text 里。
     if (child !== null && typeof child === 'object' && child.props !== undefined
