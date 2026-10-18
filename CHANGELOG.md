@@ -2,6 +2,18 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
 
+## [1.14.0] - 2026-10-18
+
+### 修复
+
+- **账号内置通道（provider `deepseek-account`）的 token 与金额仍为零**：对照 DSH 官方 `token-meter` 的折叠实现后发现两处偏差 ——
+  1. 官方**同时读 `assistant/message` 与 `assistant/attempt`**，本插件只读了前者；账号通道的用量常挂在 attempt 的流记录上，只读 message 会一无所获
+  2. 官方在 `llm/retry-started` 时**清空最后一条样本槽**，让重试后的新 attempt 独立累计
+
+  现按官方口径重写：两个事件都读，按 `(turn, step)` 先减后加，重试清槽。「一次调用恰好一笔」由这套机制保证，不靠"少读一个事件"
+- 投影 `stateVersion` 7 → 8（折叠口径变化，历史会话会重放一次）
+- 自检 96 → 97 项（attempt 的用量会被读到、非 assistant 事件一律返回 null）
+
 ## [1.13.1] - 2026-10-18
 
 ### 变更

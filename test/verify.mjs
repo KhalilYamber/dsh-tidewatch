@@ -456,11 +456,11 @@ ok('客户端上报的版本号与 package.json 一致', () => {
 
 // ── 用量读取：账号内置通道（provider deepseek-account）下 data.usage 可能为空，需回退到流记录 ──
 {
-  const usageOfMessage = __testables.usageOfMessage
+  const usageOfEvent = __testables.usageOfEvent
 
   ok('用量：优先取 data.usage', () => {
     const usage = { inputTokens: 10, outputTokens: 5 }
-    assert.equal(usageOfMessage({ type: 'assistant/message', data: { usage } }), usage)
+    assert.equal(usageOfEvent({ type: 'assistant/message', data: { usage } }), usage)
   })
 
   ok('用量：data.usage 缺失时回退到流里的 usage 块', () => {
@@ -474,7 +474,7 @@ ok('客户端上报的版本号与 package.json 一致', () => {
         ],
       },
     }
-    assert.equal(usageOfMessage(event), usage)
+    assert.equal(usageOfEvent(event), usage)
   })
 
   ok('用量：回退时取流里最后一条 usage 块', () => {
@@ -489,22 +489,27 @@ ok('客户端上报的版本号与 package.json 一致', () => {
         ],
       },
     }
-    assert.equal(usageOfMessage(event), latest)
+    assert.equal(usageOfEvent(event), latest)
   })
 
-  ok('用量：assistant/attempt 一律不计费（守住「一次调用一笔」）', () => {
+  ok('用量：assistant/attempt 的流记录也会被读到（账号通道的用量常挂在这里）', () => {
     const usage = { inputTokens: 5, outputTokens: 5 }
     const event = {
       type: 'assistant/attempt',
       data: { stream: [{ type: 'chunk', chunk: { type: 'usage', usage } }] },
     }
-    assert.equal(usageOfMessage(event), null)
+    assert.equal(usageOfEvent(event), usage)
+  })
+
+  ok('用量：与 assistant 无关的事件一律返回 null', () => {
+    assert.equal(usageOfEvent({ type: 'user/message', data: { usage: { inputTokens: 1 } } }), null)
+    assert.equal(usageOfEvent({ type: 'llm/retry-started', data: { usage: { inputTokens: 1 } } }), null)
   })
 
   ok('用量：两条路都取不到时返回 null', () => {
-    assert.equal(usageOfMessage({ type: 'assistant/message', data: {} }), null)
-    assert.equal(usageOfMessage({ type: 'assistant/message' }), null)
-    assert.equal(usageOfMessage({ type: 'assistant/message', data: { stream: [] } }), null)
+    assert.equal(usageOfEvent({ type: 'assistant/message', data: {} }), null)
+    assert.equal(usageOfEvent({ type: 'assistant/message' }), null)
+    assert.equal(usageOfEvent({ type: 'assistant/message', data: { stream: [] } }), null)
   })
 }
 

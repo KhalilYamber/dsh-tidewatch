@@ -47,7 +47,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 到 [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases) 下载最新的 `dsh-tidewatch-<版本>.tgz`，然后：
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.13.1.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.14.0.tgz
 ```
 
 ### 本地链接安装（改源码即时生效）
@@ -169,7 +169,7 @@ dsh-tidewatch
 # 构建（语法检查 + zod 依赖 junction）
 DSH_CHECKOUT=<harness 源码根目录> bash scripts/build.sh
 
-# 全套自检（96 项）：峰谷数学、双份常量一致性、计费口径回归、用量双路读取、挂件钳位、随机并列、归属判据回归
+# 全套自检（97 项）：峰谷数学、双份常量一致性、计费口径回归、用量双路读取、挂件钳位、随机并列、归属判据回归
 node test/verify.mjs
 
 # 布局冒烟测试：用真实样式表在无头 Chrome 里渲染挂件/泡泡/面板并断言布局
@@ -185,7 +185,7 @@ node test/ui-smoke.mjs
 - **节假日表内置 2026 年**，2027 年安排公布后需手动同步 `CN_PUBLIC_HOLIDAYS`（同样两处）
 - **V4 Pro 换价分界**目前是哨兵值：官方声明计费方式保持不变，如有变动需把日期填回 `V4_PRO_RETIRE_BOUNDARY`
 - **失败或被重试的调用不计费**，与官方 token-meter 口径一致；这是口径上限，不是遗漏
-- **账号内置通道不提供用量**：DSH 的账号内置通道（provider `deepseek-account`）在 `assistant/message` 里不返回 usage，流记录中同样没有，因此这类会话的 token 与金额无法计算。此时界面显示「未提供」而不是 `¥0.00`，避免让人误以为免费。改用自己 API Key 的通道即可正常计费
+- **用量缺失时如实标注**：某些通道（例如账号内置通道）可能不在结算事件里返回 usage，此时界面显示「未提供」而不是 `¥0.00`，避免把「没有数据」呈现成「免费」。用量的读取口径与 DSH 官方 `token-meter` 一致：同时读 `assistant/message` 与 `assistant/attempt`，按 `(turn, step)` 替换，重试清槽
 - **不提供余额预警**：早期版本有一个「余额低于阈值响一声」的功能，阈值写死且不可配置，属于半成品；DeepSeek 控制台本身可能已有余额提醒，故移除，不做重复建设
 
 ## 致谢
@@ -199,7 +199,7 @@ node test/ui-smoke.mjs
 
 ## 版本说明
 
-历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.13.1**。
+历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.14.0**。
 
 ## 许可
 
