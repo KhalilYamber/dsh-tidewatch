@@ -16,6 +16,7 @@
 - Click: a click opens a **lightweight bubble** (session cost / balance / peak phase, each toggleable from the panel); `详情 ›` opens the full panel
 - Motion and sound: amounts **roll digit by digit** when they change; clicks and the balance alert each have a **synthesized cue** (WebAudio, no audio assets, no licensing risk, switchable in the panel)
 - Low-balance alert: fires once when the balance drops below a threshold (¥10 by default) and re-arms after it recovers; threshold and switch both persist
+- Mascot art: the widget shows the community-created "Big Fat Fish" (大肥鱼) DeepSeek-girl artwork (originals under `lib/assets/mascot/`, compressed into the client bundle so it renders offline). The character is fan art and rights stay with each creator; **any rights holder can have it replaced or removed on request**
 
 ## Peak windows (official basis)
 

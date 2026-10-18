@@ -179,9 +179,11 @@ export function costTextOf(node) {
     return null
   }
   if (typeof node !== 'object' || node.$el !== true) return null
-  if (node.type === 'span' && node.props.className === 'tw-cost') {
+  const cls = typeof node.props.className === 'string' ? node.props.className : ''
+  const isCostNode = cls.includes('tw-cost') || cls.includes('tw-mascot-badge')
+  if (node.type === 'span' && isCostNode) {
     const child = node.children[0]
-    // v1.5.0 起金额是 RollingNumber 组件（数字滚动动画），文本在它的 props.text 里。
+    // 金额是 RollingNumber 组件（数字滚动动画），文本在它的 props.text 里。
     if (child !== null && typeof child === 'object' && child.props !== undefined
       && typeof child.props.text === 'string') return child.props.text
     return child
