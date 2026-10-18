@@ -83,16 +83,19 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
 - **缓存桶**：DeepSeek usage 的 `cacheReadTokens`/`cacheWriteTokens` 按命中价计费，别并进未命中输入桶
 - **半开区间**：窗口为 `[start, end)`，04:00:00 整点属于谷期
 - **周末与节假日规则**：2026-08-23 起周六/周日（UTC 自然日）全天谷期；2026-09-19 核对的官方口径还包含法定节假日全天空闲。切换点计算须跳过这些整天；法定节假日按**北京时间自然日**判定（`beijingDateString`），连休最长 9 天（春节），切换点扫描范围已放宽到前后各 14 天
+- **适用边界**：峰谷档位与金额只对 DeepSeek 自家模型成立。其他提供商的模型不走官方分时定价，
+  插件一律不估价（宿主侧 cost 记 0），界面显示「不适用」。移植时同理：不要拿某个模型的单价
+  去折算别的模型的 token，那会得到与账单无关的数字
 - **改价**：官方调价后同步 `pricing.js`（计费）与 `client.js` 的 `DISPLAY_PRICES`（展示），
   并为被替换的旧价**补一段历史档**（`priorPeak` / `priorOffPeak` 的成例）；否则历史会话
   重放时会按新价计算，静默低估
 
-## 五、验证清单（node test/verify.mjs，52 项）
+## 五、验证清单（node test/verify.mjs，82 项）
 
 - 峰谷窗口边界（01:00 / 04:00 / 06:00 / 10:00 整点归属）、周末规则与法定节假日规则
 - 下一切换点计算（跨午夜窗口、周末 → 下周一、节假日 → 下一个工作日，含 7 天连休）
 - 三段价格时代（基础价 / 首版峰谷价 / 现行价）与换价分界前后一刻
-- 模型别名命中、未知模型回退 default
+- 模型别名命中；DeepSeek 家族未知模型回退 default；其他提供商的模型判定为不计价
 - pro 换价分界哨兵值（当前不触发，pro 恒按自身价目）
 - 缓存读写按命中价计费、负 token 非负保护
 - 双份常量一致性（client 的 `PEAK_WINDOWS` / `DISPLAY_PRICES` / `MODEL_ALIASES` / `CN_PUBLIC_HOLIDAYS` / 节假日规则分界 与 pricing 对齐）

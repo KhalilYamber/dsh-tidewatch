@@ -11,6 +11,7 @@
 - 跟随 GUI 亮/暗主题（`--dsw-*` 变量）
 - 前端优先采用 DSH 官方 UI 原语（shell 共享模块表中的 `@deepseek-ai/dsh-client-ui-primitives`）：状态点 `StateDot`、标签 `Tag`、悬浮提示 `Tooltip`、外点关闭 `useDismissOnOutsidePointer`，观感与官方控件一致；老版 shell 的模块表若没有该包，自动降级到内置实现，功能不受影响
 - 账户余额：读 DSH 的账户服务（`ctx.remote.account.getBalance`），显示**充值余额 / 礼金余额 / 合计**与读数时刻；查询由宿主执行，本插件不接触 API Key、不直接发请求、不落盘
+- 适用边界：峰谷档位与金额只对 **DeepSeek 自家模型**成立。换用其他提供商（Claude / GPT / Kimi 等）时，胶囊显示「不适用」、金额显示「—」，时段表与价目保留但标注「仅 DeepSeek 模型适用」，余额仍如实显示 DeepSeek 账户的数字 —— 宁可不给数字，也不拿 flash 价硬凑
 
 ## 峰谷时段（官方依据）
 

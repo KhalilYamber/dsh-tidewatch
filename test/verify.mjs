@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
-  isPeakHour, peakPhaseAt, costOf, priceEntryFor, isAllDayOffPeak,
+  isPeakHour, peakPhaseAt, costOf, priceEntryFor, isPricedModel, isAllDayOffPeak,
   DEFAULT_PEAK_WINDOWS, DEFAULT_PRICE_TABLE, LEGACY_BASE_BOUNDARY, FLASH_REPRICE_BOUNDARY,
   V4_PRO_RETIRE_BOUNDARY, MODEL_ALIASES, CN_PUBLIC_HOLIDAYS, BEIJING_OFFSET_MS,
 } from '../lib/pricing.js'
@@ -394,6 +394,53 @@ ok('计费口径：现行的 assistant/attempt 不计费（与官方 token-meter
 ok('计费口径：assistant/message 缺 usage 时不进账', () => {
   const view = projectCost([requestHeader, { ...messageEvent, data: { turn: 1, step: 1, message: { id: 'm2' } } }])
   assert.equal(view.cost, 0)
+})
+
+// ── 非 DeepSeek 模型：不按 flash 价兜底（投影 v6 口径）────────────────────
+//
+// 官方峰谷分时定价只适用于 DeepSeek 自家模型。其他提供商（Claude / GPT / Kimi…）
+// 若按 flash 价兜底，会得出一个与真实账单无关的数字，比不显示更容易误导。故：
+// 宿主侧不计价（cost 记 0），视图暴露 provider 供前端显示「不适用」。
+
+ok('已收录模型判定：DeepSeek 家族（含别名）为 true', () => {
+  for (const m of ['deepseek-flash', 'deepseek-v4-flash', 'deepseek-v4.1-flash', 'deepseek-v4-pro']) {
+    assert.equal(isPricedModel(m), true, `${m} 应命中价目`)
+  }
+})
+ok('已收录模型判定：其他提供商的模型与空值为 false', () => {
+  for (const m of ['claude-sonnet-4-5', 'gpt-5-codex', 'kimi-k2', 'glm-4.6', '', null, undefined]) {
+    assert.equal(isPricedModel(m), false, `${m} 不该命中价目`)
+  }
+})
+ok('已收录模型判定与 priceEntryFor 的兜底口径对齐', () => {
+  const fallback = DEFAULT_PRICE_TABLE.default
+  const samples = [
+    'deepseek-flash', 'deepseek-v4-pro', 'deepseek-v4.1-flash',
+    'claude-sonnet-4', 'gpt-5', 'kimi-k2', 'some-relay/deepseek-flash',
+  ]
+  for (const m of samples) {
+    assert.equal(isPricedModel(m), priceEntryFor(m, AT) !== fallback, `${m} 两处判据不一致`)
+  }
+})
+ok('投影：非 DeepSeek provider 的调用不计费（token 仍照实累计）', () => {
+  const view = projectCost([
+    { ...requestHeader, data: { header: { config: { provider: 'anthropic', model: 'claude-sonnet-4-5' } } } },
+    messageEvent,
+  ])
+  assert.equal(view.cost, 0)
+  assert.equal(view.input + view.output + view.cacheRead, 3_100_000)
+})
+ok('投影：view 暴露 provider 与 model（前端据此判定是否适用）', () => {
+  const view = projectCost([requestHeader, messageEvent])
+  assert.equal(view.provider, 'deepseek-official')
+  assert.equal(view.model, 'deepseek-flash')
+})
+ok('投影：中转 provider 但模型名可识别时照常计费', () => {
+  const view = projectCost([
+    { ...requestHeader, data: { header: { config: { provider: 'my-relay', model: 'deepseek-flash' } } } },
+    messageEvent,
+  ])
+  assert.ok(Math.abs(view.cost - CALL_COST) < 1e-9, `实得 ${view.cost}`)
 })
 
 // ── 归属判据回归（加载真实 lib/client.js，驱动会话切换序列）──────────────

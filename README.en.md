@@ -11,6 +11,7 @@
 - Follows the GUI light/dark theme (`--dsw-*` tokens)
 - Front end prefers the official DSH UI primitives from the shell module table (`@deepseek-ai/dsh-client-ui-primitives`): `StateDot`, `Tag`, `Tooltip` and `useDismissOnOutsidePointer`; a shell whose module table lacks that package falls back to the built-in implementation, with no functional loss
 - Account balance: read through the DSH account service (`ctx.remote.account.getBalance`), showing **paid / bonus / total** plus the reading time; the host performs the query, and the plugin never touches API keys, issues no HTTP request of its own, and persists nothing
+- Scope: the peak/off-peak tiers and cost figures apply to **DeepSeek's own models** only. With another provider (Claude / GPT / Kimi…), the badge reads "not applicable", amounts read "—", the window table and price rows stay but carry a scope note, and the balance row still reports the DeepSeek account exactly — no figure is better than a flash-price guess
 
 ## Peak windows (official basis)
 
