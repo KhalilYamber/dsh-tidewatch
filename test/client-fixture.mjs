@@ -179,7 +179,13 @@ export function costTextOf(node) {
     return null
   }
   if (typeof node !== 'object' || node.$el !== true) return null
-  if (node.type === 'span' && node.props.className === 'tw-cost') return node.children[0]
+  if (node.type === 'span' && node.props.className === 'tw-cost') {
+    const child = node.children[0]
+    // v1.5.0 起金额是 RollingNumber 组件（数字滚动动画），文本在它的 props.text 里。
+    if (child !== null && typeof child === 'object' && child.props !== undefined
+      && typeof child.props.text === 'string') return child.props.text
+    return child
+  }
   const children = typeof node.type === 'function' ? [render(node.type, node.props)] : node.children
   for (const child of children) { const hit = costTextOf(child); if (hit !== null) return hit }
   return null

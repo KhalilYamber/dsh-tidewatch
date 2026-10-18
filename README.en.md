@@ -1,6 +1,6 @@
 # dsh-tidewatch
 
-**DeepSeek peak/off-peak tide badge**: a badge docked in the stats row below the composer that tells you whether it's peak or off-peak right now, how long until the next phase, and how much this session costs.
+**DeepSeek peak/off-peak tide widget**: a draggable widget parked in the bottom-right corner that tells you whether it's peak or off-peak right now, how long until the next phase, and how much this session costs.
 
 - Status dot: **orange/red for peak, teal/green for off-peak**, readable at a glance
 - Collapsed: `● 峰期 距谷期 03:33 · ¥0.12` (peak, 03:33 to off-peak, ¥0.12)
@@ -12,6 +12,10 @@
 - Front end prefers the official DSH UI primitives from the shell module table (`@deepseek-ai/dsh-client-ui-primitives`): `StateDot`, `Tag`, `Tooltip` and `useDismissOnOutsidePointer`; a shell whose module table lacks that package falls back to the built-in implementation, with no functional loss
 - Account balance: read through the DSH account service (`ctx.remote.account.getBalance`), showing **paid / bonus / total** plus the reading time; the host performs the query, and the plugin never touches API keys, issues no HTTP request of its own, and persists nothing
 - Scope: the peak/off-peak tiers and cost figures apply to **DeepSeek's own models** only. With another provider (Claude / GPT / Kimi…), the badge reads "not applicable", amounts read "—", the window table and price rows stay but carry a scope note, and the balance row still reports the DeepSeek account exactly — no figure is better than a flash-price guess
+- Widget form: **pinned to the bottom-right corner and draggable**; releasing near either edge snaps it there and the position persists in localStorage; snapping left mirrors the content so it still reads inward
+- Click: a click opens a **lightweight bubble** (session cost / balance / peak phase, each toggleable from the panel); `详情 ›` opens the full panel
+- Motion and sound: amounts **roll digit by digit** when they change; clicks and the balance alert each have a **synthesized cue** (WebAudio, no audio assets, no licensing risk, switchable in the panel)
+- Low-balance alert: fires once when the balance drops below a threshold (¥10 by default) and re-arms after it recovers; threshold and switch both persist
 
 ## Peak windows (official basis)
 
