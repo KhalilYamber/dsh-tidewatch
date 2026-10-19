@@ -13,6 +13,36 @@ Since 2026-08-17 DeepSeek bills its API on a peak/off-peak schedule: peak prices
 
 What it sells is a checkable definition: the peak windows, weekends, public holidays, make-up working days and all three historical price eras live in the code, backed by a full-year hour-by-hour comparison script.
 
+## Two layouts, pick either
+
+The plugin ships two interface layouts. **Both are fully functional** — peak-window logic, session cost, token breakdown and account balance are identical. They differ only in where they sit and what they look like. Install whichever appeals to you.
+
+| Layout | What it looks like | Best for |
+|---|---|---|
+| **Mascot widget**<br>current version | A mascot in the bottom-right corner, draggable anywhere and snapping to either edge. One click pops a comic bubble; **a second click turns the page** to this session's cost. Different artwork for peak and off-peak | If you like having a character around and want the artwork to follow the tide |
+| **Inline capsule**<br>v1.4.2 | Sits in the official composer row beside the built-in stats — **no screen space taken, nothing covered** | If you want it minimal and out of the way |
+
+### Install the mascot widget (recommended)
+
+```sh
+dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
+```
+
+Or download the latest `dsh-tidewatch-1.23.3.tgz` from [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases) and install it locally.
+
+### Install the inline capsule
+
+```sh
+# download first, then install locally
+dsh plugin --profile web add ./dsh-tidewatch-1.4.2.tgz
+```
+
+[dsh-tidewatch-1.4.2.tgz](https://github.com/KhalilYamber/dsh-tidewatch/releases/download/v1.4.2/dsh-tidewatch-1.4.2.tgz)
+
+That build also supports the balance-drop estimate on the account provider; it has **no** bubble editor, module library or official-projection sampling.
+
+> Known issue: the capsule badge lives on the app-level overlay, so it **also shows on plugin settings pages** (the behaviour reported in [issue #3](https://github.com/KhalilYamber/dsh-tidewatch/issues/3)). If that bothers you, use the mascot layout and drag the mascot into a corner.
+
 ## Features
 
 | Area | Capability |
@@ -31,6 +61,8 @@ What it sells is a checkable definition: the peak windows, weekends, public holi
 | **Graceful scope** | With a non-DeepSeek provider it reads "not applicable" rather than pretending a Flash price |
 
 ## Install
+
+> For a quick install see "[Two layouts](#two-layouts-pick-either)" above. This section covers requirements and every installation route.
 
 ### Requirements
 
@@ -82,29 +114,6 @@ dsh plugin --profile web remove dsh-tidewatch    # uninstall
 - **Close the panel** → the `✕` at its top right, the mascot itself, or anywhere outside
 
 The currency choice takes effect immediately and is remembered; CNY shows 2 decimals, USD shows 4.
-
-## Two layouts
-
-The plugin ships two interface layouts; pick the one you want.
-
-### Mascot widget (v1.5.0 and later, recommended)
-
-A mascot parked in the bottom-right corner, draggable and snapping to either edge. One click pops a comic bubble; **a second click turns the page** to this session's cost. The panel carries a bubble editor (add or remove pages, edit text, drag to reorder, module library). The current version is this layout.
-
-### Inline capsule (v1.4.2, the other layout)
-
-Sits in the official composer row beside the built-in stats, taking up no screen space:
-
-```sh
-# download the tarball, then
-dsh plugin --profile web add ./dsh-tidewatch-1.4.2.tgz
-```
-
-[dsh-tidewatch-1.4.2.tgz](https://github.com/KhalilYamber/dsh-tidewatch/releases/download/v1.4.2/dsh-tidewatch-1.4.2.tgz)
-
-That build offers the peak countdown, session cost, account balance and currency switch, and it **also estimates the account provider's cost from the balance drop**; it has **no** bubble, editor, module library or official-projection sampling, and none of the defect fixes that came later.
-
-> Known issue: the capsule badge lives on the app-level overlay, so it **also shows on plugin settings pages** (the behaviour reported in [issue #3](https://github.com/KhalilYamber/dsh-tidewatch/issues/3)). If you want a quiet badge without that, use the current version and drag the mascot into a corner.
 
 ## How billing works
 
