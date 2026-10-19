@@ -28,7 +28,7 @@ DeepSeek 自 2026-08-17 起对 API 实行峰谷分时定价：峰期价目是谷
 dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 ```
 
-或从 [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases) 下载最新的 `dsh-tidewatch-1.24.1.tgz` 后本地安装。
+或从 [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases) 下载最新的 `dsh-tidewatch-1.25.0.tgz` 后本地安装。
 
 ### 装胶囊徽章版
 
@@ -81,7 +81,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 到 [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases) 下载最新的 `dsh-tidewatch-<版本>.tgz`，然后：
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.24.1.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.25.0.tgz
 ```
 
 ### 本地链接安装（改源码即时生效）
@@ -206,7 +206,7 @@ dsh-tidewatch
 # 构建（语法检查 + zod 依赖 junction）
 DSH_CHECKOUT=<harness 源码根目录> bash scripts/build.sh
 
-# 全套自检（107 项）：峰谷数学、双份常量一致性、计费口径回归、用量双路读取、挂件钳位、随机并列、归属判据回归
+# 全套自检（108 项）：峰谷数学、双份常量一致性、计费口径回归、用量双路读取、挂件钳位、随机并列、归属判据回归
 node test/verify.mjs
 
 # 布局冒烟测试：用真实样式表在无头 Chrome 里渲染挂件/泡泡/面板并断言布局
@@ -238,7 +238,7 @@ node test/ui-smoke.mjs
 
 ## 版本说明
 
-历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.24.1**。
+历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.25.0**。
 
 ## 许可
 

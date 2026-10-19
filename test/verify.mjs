@@ -544,6 +544,35 @@ ok('客户端上报的版本号与 package.json 一致', () => {
   })
 }
 
+// ── 会话切换三段：A → 新会话 B → 切回 A，三段都不能串账 ──
+{
+  ok('会话切换三段：A → 新会话 → 切回 A 都不串账', () => {
+    const { TideCard, Probe } = loadClientPlugin()
+    const mk = cost => ({
+      provider: 'deepseek', model: 'deepseek-v4-flash', cost,
+      input: cost > 0 ? 1000000 : 0, output: cost > 0 ? 500000 : 0,
+      cacheRead: 0, cacheWrite: 0, reasoning: 0, byModel: {}, usageMissed: false,
+      diag: { message: cost > 0 ? 5 : 0, attempt: 0, usageFound: cost > 0 ? 5 : 0 }, official: null,
+    })
+    const sessions = { phase: 'ready', byId: { A: { blank: false }, B: { blank: false } } }
+    const propsFor = usage => ({
+      useProjection: key => (key === 'costUsage' ? usage : undefined),
+      useSessions: sel => sel(sessions),
+      account: undefined,
+    })
+    const A = mk(0.432), B = mk(0)
+
+    Probe({ sessionId: 'A', useProjection: propsFor(A).useProjection })
+    assert.equal(costTextOf(TideCard(propsFor(A))), '¥2.88', '会话 A 应显示 ¥2.88')
+
+    Probe({ sessionId: 'B', useProjection: propsFor(B).useProjection })
+    assert.equal(costTextOf(TideCard(propsFor(B))), '¥0.00', '新会话 B 不得继承 A 的额度')
+
+    Probe({ sessionId: 'A', useProjection: propsFor(A).useProjection })
+    assert.equal(costTextOf(TideCard(propsFor(A))), '¥2.88', '切回 A 应恢复显示 ¥2.88')
+  })
+}
+
 // ── 新会话：不能继承上一场的额度 ──
 {
   ok('新会话不继承上一场的额度', () => {
