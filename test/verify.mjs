@@ -855,6 +855,18 @@ ok('后台不再写死版本号（诊断文件读 package.json）', () => {
     assert.equal(costTextOf(TideCard({ ...props, variant: 'capsule' })), '¥2.88')
     testables.setForm('mascot')
   })
+
+  ok('形态：没被选中的那份不轮询余额', () => {
+    let calls = 0
+    const account = { getBalance: async () => { calls += 1; return { ok: false } } }
+    testables.setForm('mascot')
+    TideCard({ ...props, variant: 'capsule', account })
+    assert.equal(calls, 0, '未选中的形态不该发起余额查询')
+    testables.setForm('capsule')
+    TideCard({ ...props, variant: 'capsule', account })
+    assert.equal(calls, 1, '切过去之后才查一次')
+    testables.setForm('mascot')
+  })
 }
 
 // ── 挂件钳位与气泡模板（纯函数；全屏 ↔ 小窗后挂件跑出视口是本项的存在理由）──
