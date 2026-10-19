@@ -13,35 +13,20 @@ Since 2026-08-17 DeepSeek bills its API on a peak/off-peak schedule: peak prices
 
 What it sells is a checkable definition: the peak windows, weekends, public holidays, make-up working days and all three historical price eras live in the code, backed by a full-year hour-by-hour comparison script.
 
-## Two layouts, pick either
+## Two layouts, switch anytime
 
-The plugin ships two interface layouts. **Both are fully functional** — peak-window logic, session cost, token breakdown and account balance are identical. They differ only in where they sit and what they look like. Install whichever appeals to you.
+One build ships both interface layouts. Peak-window logic, session cost, token breakdown and account balance are identical — only the placement and appearance differ. Install once and switch **from the panel, effective immediately**, with no reinstall and no refresh.
 
 | Layout | What it looks like | Best for |
 |---|---|---|
-| **Mascot widget**<br>current version | A mascot in the bottom-right corner, draggable anywhere and snapping to either edge. One click pops a comic bubble; **a second click turns the page** to this session's cost. Different artwork for peak and off-peak | If you like having a character around and want the artwork to follow the tide |
-| **Inline capsule**<br>v1.4.2 | Sits in the official composer row beside the built-in stats — **no screen space taken, nothing covered** | If you want it minimal and out of the way |
+| **Mascot widget** | A mascot in the bottom-right corner, draggable anywhere and snapping to either edge. One click pops a comic bubble; **a second click turns the page** to this session's cost. Different artwork for peak and off-peak | If you like having a character around and want the artwork to follow the tide |
+| **Inline capsule** | Sits in the official composer row beside the built-in stats — **no screen space taken, nothing covered**; one click opens the full panel | If you want it minimal and out of the way |
 
-### Install the mascot widget (recommended)
+### Switching layouts
 
-```sh
-dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
-```
+Open the panel (click the mascot, then `详情 ›`; the capsule opens it directly) → the **Layout** row at the bottom → pick **Mascot widget** or **Inline capsule**. The switch is immediate and the choice is remembered.
 
-Or download the latest `dsh-tidewatch-1.26.0.tgz` from [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases) and install it locally.
-
-### Install the inline capsule
-
-```sh
-# download first, then install locally
-dsh plugin --profile web add ./dsh-tidewatch-1.4.2.tgz
-```
-
-[dsh-tidewatch-1.4.2.tgz](https://github.com/KhalilYamber/dsh-tidewatch/releases/download/v1.4.2/dsh-tidewatch-1.4.2.tgz)
-
-That build also supports the balance-drop estimate on the account provider; it has **no** bubble editor, module library or official-projection sampling.
-
-> Known issue: the capsule badge lives on the app-level overlay, so it **also shows on plugin settings pages** (the behaviour reported in [issue #3](https://github.com/KhalilYamber/dsh-tidewatch/issues/3)). If that bothers you, use the mascot layout and drag the mascot into a corner.
+> Both layouts stay mounted and only the selected one renders; the other runs no balance polling or timers and leaves no gap in the UI.
 
 ## Features
 
@@ -51,6 +36,7 @@ That build also supports the balance-drop estimate on the account provider; it h
 | **Billing** | Three historical price eras (base / first peak schedule / V4.1 Flash repricing) chosen by each call's timestamp; cache hit and miss priced separately; output includes reasoning tokens |
 | **Balance** | DeepSeek account balance (paid / bonus / total) with the reading time |
 | **Widget** | Mascot pinned to the bottom-right corner, draggable, snaps to the nearer edge on release, position persisted; a different pose for peak and off-peak |
+| **Layouts** | Mascot widget and inline capsule ship in one build; switch from the panel, effective immediately, and the choice is remembered |
 | **Session isolation** | Each session keeps its own tally: a new session starts at zero, switching back restores that session's own figures, and concurrent sessions never bleed into each other |
 | **Bubble** | Clicking the mascot pops a comic-style speech bubble (large radius, tail pointing at the head); **a click on the bubble turns the page**. It goes away in exactly two ways: it fades out after about five seconds, or a click anywhere outside the widget dismisses it |
 | **Interaction** | Clicking the mascot opens the bubble; clicking the bubble turns the page; the full panel opens from `详情 ›` inside the bubble, and closes with its `✕`, another click on the mascot, or a click outside |
@@ -82,7 +68,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 Download the latest `dsh-tidewatch-<version>.tgz` from [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases), then:
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.26.0.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.27.0.tgz
 ```
 
 ### From a local checkout (live edits)
@@ -207,7 +193,7 @@ dsh-tidewatch
 # build (syntax check + zod dependency junction)
 DSH_CHECKOUT=<harness source root> bash scripts/build.sh
 
-# full self-check (120 checks): peak math, dual-constant parity, billing regression, dual-path usage reading, widget clamping, random variants, ownership regression, distinct peak/off-peak sprites, per-session official sampling
+# full self-check (122 checks): peak math, dual-constant parity, billing regression, dual-path usage reading, widget clamping, random variants, ownership regression, distinct peak/off-peak sprites, per-session official sampling, layout switching
 node test/verify.mjs
 
 # layout smoke: renders the widget, bubble and panel in headless Chrome with the real
@@ -239,7 +225,7 @@ This plugin stands on other people's work:
 
 ## Version notes
 
-See [CHANGELOG.md](CHANGELOG.md). Current version **1.26.0**.
+See [CHANGELOG.md](CHANGELOG.md). Current version **1.27.0**.
 
 ## License
 

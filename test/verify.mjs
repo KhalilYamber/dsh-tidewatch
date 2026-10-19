@@ -827,6 +827,36 @@ ok('后台不再写死版本号（诊断文件读 package.json）', () => {
   })
 }
 
+// ── 形态切换：立绘与胶囊同时挂载，只渲染被选中的那个（切换即时生效）──────
+{
+  const { Probe, TideCard, testables } = loadClientPlugin()
+  const view = {
+    provider: 'deepseek', model: 'deepseek-flash',
+    input: 1000, output: 500, cacheRead: 0, cacheWrite: 0, reasoning: 0, cost: 0.432,
+    byModel: {}, usageMissed: false, diag: { message: 1, attempt: 0, usageFound: 1 }, official: null,
+  }
+  const useProjection = key => (key === 'costUsage' ? view : undefined)
+  Probe({ sessionId: 'sess-form', useProjection })
+  const props = {
+    useSessions: sel => sel({ phase: 'ready', byId: { 'sess-form': { blank: false } } }),
+    account: undefined,
+    useProjection,
+  }
+
+  ok('形态：默认立绘，胶囊版不渲染', () => {
+    testables.setForm('mascot')
+    assert.equal(costTextOf(TideCard({ ...props, variant: 'capsule' })), null, '没被选中的形态应返回 null')
+    assert.equal(costTextOf(TideCard({ ...props, variant: 'mascot' })), '¥2.88')
+  })
+
+  ok('形态：切到胶囊后立绘版不渲染、胶囊版渲染出来', () => {
+    testables.setForm('capsule')
+    assert.equal(costTextOf(TideCard({ ...props, variant: 'mascot' })), null)
+    assert.equal(costTextOf(TideCard({ ...props, variant: 'capsule' })), '¥2.88')
+    testables.setForm('mascot')
+  })
+}
+
 // ── 挂件钳位与气泡模板（纯函数；全屏 ↔ 小窗后挂件跑出视口是本项的存在理由）──
 {
   const { testables } = loadClientPlugin()

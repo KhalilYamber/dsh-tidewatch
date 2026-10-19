@@ -183,7 +183,7 @@ export function costTextOf(node) {
   if (typeof node !== 'object' || node.$el !== true) return null
   const cls = typeof node.props.className === 'string' ? node.props.className : ''
   // v1.6.2 起挂件上不再显示金额：改读挂件按钮的 data-cost（金额本身在泡泡与面板里）。
-  if (node.type === 'button' && cls.includes('tw-mascot')) {
+  if (node.type === 'button' && (cls.includes('tw-mascot') || cls.includes('tw-capsule'))) {
     const cost = node.props['data-cost']
     if (typeof cost === 'string' && cost.length > 0) return cost
   }

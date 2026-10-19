@@ -78,6 +78,14 @@ ${CSS}
     <div class="tw-total"><span class="tw-total-label"><span class="tw-total-arrow">▶</span><span>本次会话费用</span></span><span class="tw-total-val"><span class="tw-num-roll">¥16.71</span></span></div>
   </div>
 </div>
+<!-- dock 行里的胶囊形态（切到胶囊时显示的就是这一枚） -->
+<div id="dockRow" style="position:fixed;left:24px;bottom:12px;display:flex;align-items:center;gap:8px">
+  <span class="tw-capsule" id="capsule">
+    <span class="tw-capsule-phase">谷</span>
+    <span class="tw-capsule-countdown">01:23:45</span>
+    <span class="tw-capsule-cost">¥0.71</span>
+  </span>
+</div>
 </body></html>`
 }
 
@@ -160,10 +168,12 @@ async function main() {
         const widgetLeft = document.getElementById('widgetLeft')
         const panelLeft = document.getElementById('panelLeft')
         const totalVal = document.querySelector('.tw-total-val')
+        const capsule = document.getElementById('capsule')
         const hit = document.elementFromPoint(rect(mascot).l + rect(mascot).w / 2, rect(mascot).t + rect(mascot).h / 2)
         return JSON.stringify({
           vw: innerWidth, vh: innerHeight,
           widget: rect(widget), bubble: rect(bubble), mascot: rect(mascot),
+          capsule: rect(capsule),
           widgetPE: getComputedStyle(widget).pointerEvents,
           bubblePE: getComputedStyle(bubble).pointerEvents,
           hitInsideMascot: mascot.contains(hit),
@@ -182,6 +192,8 @@ async function main() {
       check('左侧吸附时面板向右展开（不探出左侧）', m.panelLeft.l >= -1, `panel.left=${Math.round(m.panelLeft.l)}`)
       check('左侧吸附时面板不超出视口右侧', m.panelLeft.r <= m.vw + 1, `panel.right=${Math.round(m.panelLeft.r)}`)
       check('金额以单段文本渲染（不再逐位摊开）', m.numRollCount === 1 && m.totalValRect.w < 200, `宽度=${Math.round(m.totalValRect.w)}px`)
+      check('胶囊形态渲染出可点击的尺寸', m.capsule.w > 60 && m.capsule.h >= 16, `w=${Math.round(m.capsule.w)} h=${Math.round(m.capsule.h)}`)
+      check('胶囊不超出视口右侧', m.capsule.r <= m.vw + 1, `right=${Math.round(m.capsule.r)} vw=${m.vw}`)
 
       // 真实点击：验证泡泡能收起、能再打开（对应历史上「点了没反应」的缺陷）
       const toggled = await evaluate(`(() => {
