@@ -51,6 +51,7 @@ That build also supports the balance-drop estimate on the account provider; it h
 | **Billing** | Three historical price eras (base / first peak schedule / V4.1 Flash repricing) chosen by each call's timestamp; cache hit and miss priced separately; output includes reasoning tokens |
 | **Balance** | DeepSeek account balance (paid / bonus / total) with the reading time |
 | **Widget** | Mascot pinned to the bottom-right corner, draggable, snaps to the nearer edge on release, position persisted; a different pose for peak and off-peak |
+| **Session isolation** | Each session keeps its own tally: a new session starts at zero, switching back restores that session's own figures, and concurrent sessions never bleed into each other |
 | **Bubble** | Clicking the mascot pops a comic-style speech bubble (large radius, tail pointing at the head); **a click on the bubble turns the page**. It goes away in exactly two ways: it fades out after about five seconds, or a click anywhere outside the widget dismisses it |
 | **Interaction** | Clicking the mascot opens the bubble; clicking the bubble turns the page; the full panel opens from `详情 ›` inside the bubble |
 | **Editor** | The panel carries a bubble editor: add or remove pages and lines, edit templates, **reorder by dragging** (or use the arrows), a **module library** (`☆` saves a line, one click inserts it), restore the defaults |
