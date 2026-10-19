@@ -513,6 +513,37 @@ ok('客户端上报的版本号与 package.json 一致', () => {
   })
 }
 
+// ── 用量缺失标记：置真之后必须能被后续带用量的事件清掉 ──
+{
+  ok('缺失标记：先无用量后有用量时能清掉', async () => {
+    let definition = null
+    const indexModule = await import('../lib/index.js')
+    indexModule.apply({
+      logger: { debug() {} },
+      inject(_deps, run) {
+        run({
+          sessionProjections: { register(def) { definition = def }, snapshot: () => ({ values: {} }) },
+          on() {},
+        })
+      },
+    })
+    const at = Date.parse('2026-08-20T05:00:00Z')
+    let state = definition.init()
+    state = definition.apply(state, { type: 'assistant/message', data: { turn: 1, step: 1 }, time: at })
+    assert.equal(state.usageMissed, true, '没有 usage 时应置真')
+    state = definition.apply(state, {
+      type: 'assistant/message',
+      data: { turn: 1, step: 2, usage: { inputTokens: 1000000, outputTokens: 500000 } },
+      time: at,
+    })
+    const view = definition.wire.view(state)
+    assert.equal(view.usageMissed, false, '拿到 usage 后应清除标记')
+    assert.equal(view.input, 1000000, '输入 token 应准确')
+    assert.equal(view.output, 500000, '输出 token 应准确')
+    assert.ok(Math.abs(view.cost - 0.45) < 1e-9, '谷时 100万×0.15 + 50万×0.6 = 0.45 美元')
+  })
+}
+
 // ── 桥订阅：v1.9.1 曾误删这行，导致挂件永远停在初始的空值上（金额一直为零）──
 {
   ok('挂件必须订阅桥：桥写入后重渲染出新值', () => {

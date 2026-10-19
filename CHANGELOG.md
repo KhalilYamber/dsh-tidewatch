@@ -2,6 +2,21 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
 
+## [1.24.0] - 2026-10-19
+
+### 修复
+
+- **「未提供」标记无法清除（真 bug）**：折叠逻辑里第 223 行算出了 `cleared`（已清除标记的状态），返回时第 270 行却读回 `state.usageMissed`（旧值）。标记一旦置真就永久生效，导致有几十万 token 的会话仍显示「未提供」。已改为返回 `cleared.usageMissed`
+- 投影 state 不再携带 `diag` 与 `official`（它们不是折叠状态，`view` 直接从模块变量读）
+
+### 审查结论（未改动的部分）
+
+- **模型识别准确**：`request/header` 的 `config.model` 与 `config.provider` 随每次请求更新，计价用当次事件时刻的模型
+- **token 准确**：按 `(turn, step)` 先减后加，同一步骤只记最后一笔
+- **金额准确**：`costOf` 按事件发生时刻三段选价，100 万未命中输入 + 50 万输出按谷时算得 0.45 美元，与手算一致
+- **推理 token 未重复计费**：`outputTokens` 本身已含推理，`costOf` 里那行 `+ reasoning * reasoningPrice` 因价格表不填 `reasoning` 而恒为 0。已加约束注释钉住这个前提
+- 自检 105 → 106 项
+
 ## [1.23.3] - 2026-10-19
 
 ### 变更
