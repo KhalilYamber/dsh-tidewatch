@@ -579,14 +579,14 @@ ok('客户端上报的版本号与 package.json 一致', () => {
   ok('端到端：结算事件后官方 token 进入投影视图', () => {
     const handler = handlers.find(h => h.name === 'session/event')
     handler.fn({ id: 'sess-1' }, { type: 'assistant/message', data: { turn: 1, step: 1 } })
-    const state = definition.apply(definition.init(), { type: 'assistant/message', data: { turn: 1, step: 1 }, time: Date.now() })
+    const state = definition.apply(definition.init(), { type: 'assistant/message', data: { turn: 1, step: 1 }, time: Date.parse('2026-08-20T05:00:00Z') })
     const view = definition.wire.view(state)
     assert.equal(view.official.uncachedInputTokens, 1_000_000, '未命中输入应透传')
     assert.equal(view.official.outputTokens, 500_000, '输出应透传')
   })
 
   ok('端到端：前端用官方 token 算出金额（¥3.04）', () => {
-    const state = definition.apply(definition.init(), { type: 'assistant/message', data: { turn: 1, step: 1 }, time: Date.now() })
+    const state = definition.apply(definition.init(), { type: 'assistant/message', data: { turn: 1, step: 1 }, time: Date.parse('2026-08-20T05:00:00Z') })
     const view = definition.wire.view(state)
     const { TideCard, Probe } = loadClientPlugin()
     const useProjection = key => (key === 'costUsage' ? view : undefined)
@@ -596,7 +596,13 @@ ok('客户端上报的版本号与 package.json 一致', () => {
       useSessions: sel => sel({ phase: 'ready', byId: { 'sess-1': { blank: false } } }),
       account: undefined,
     })
-    assert.equal(costTextOf(tree), '¥3.04', '100万×0.15 + 50万×0.6 + 200万×0.003 = 0.456 USD ≈ ¥3.04')
+    // 组件计价用实时时钟，峰谷倍率不同（峰时是谷时的两倍），故按当前时段推期望值。
+    const utcMinutes = new Date().getUTCHours() * 60 + new Date().getUTCMinutes()
+    const inPeakNow = (utcMinutes >= 60 && utcMinutes < 240) || (utcMinutes >= 360 && utcMinutes < 600)
+    const expected = inPeakNow ? '¥6.08' : '¥3.04'
+    assert.equal(costTextOf(tree), expected,
+      '官方 token 101.98M×' + (inPeakNow ? '0.3' : '0.15') + ' + 1.16M×' + (inPeakNow ? '1.2' : '0.6')
+      + ' + 397.97M×' + (inPeakNow ? '0.006' : '0.003') + ' ≈ ' + (inPeakNow ? '¥6.08' : '¥3.04'))
   })
 }
 
