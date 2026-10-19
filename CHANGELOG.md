@@ -2,6 +2,13 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
 
+## [1.20.1] - 2026-10-18
+
+### 修复
+
+- **投影视图的两个字段被 schema 静默剥离**：`view` 返回 12 个字段，`viewSchema` 只声明了 10 个，`usageMissed` 与 `diag` 每次都在校验时被 zod 剥掉。现补齐声明
+- **宿主侧加入注册自检日志**：注册后立刻用初始状态跑一遍 `view` + `viewSchema`，把字段名与 `stateVersion` 打到控制台。校验不过时宿主不会把这个投影推给浏览器，而前端只会看到 `undefined` —— 有这条日志就能分清「投影坏了」与「前端没收到」
+
 ## [1.20.0] - 2026-10-18
 
 ### 新增
