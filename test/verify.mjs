@@ -827,6 +827,27 @@ ok('后台不再写死版本号（诊断文件读 package.json）', () => {
   })
 }
 
+// ── 总额按各模型官方汇率折算：pro 不能用 flash 的 6.67 ───────────────────
+{
+  ok('总额按各模型官方汇率折算：1 美元 pro 花费显示 ¥6.82', () => {
+    const { TideCard, Probe } = loadClientPlugin()
+    const view = {
+      provider: 'deepseek', model: 'deepseek-v4-pro',
+      input: 0, output: 0, cacheRead: 0, cacheWrite: 0, reasoning: 0, cost: 1,
+      byModel: { 'deepseek-v4-pro': { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, reasoning: 0, cost: 1 } },
+      usageMissed: false, diag: { message: 1, attempt: 0, usageFound: 1 }, official: null,
+    }
+    const useProjection = key => (key === 'costUsage' ? view : undefined)
+    Probe({ sessionId: 'sess-rate', useProjection })
+    const tree = TideCard({
+      useProjection,
+      useSessions: sel => sel({ phase: 'ready', byId: { 'sess-rate': { blank: false } } }),
+      account: undefined,
+    })
+    assert.equal(costTextOf(tree), '¥6.82', '官网 pro 峰时输出 ¥27 / $3.96 ≈ 6.82，不该按 flash 的 6.67 折')
+  })
+}
+
 // ── 形态切换：立绘与胶囊同时挂载，只渲染被选中的那个（切换即时生效）──────
 {
   const { Probe, TideCard, testables } = loadClientPlugin()

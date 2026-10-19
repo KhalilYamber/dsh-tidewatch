@@ -118,7 +118,7 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
   并为被替换的旧价**补一段历史档**（`priorPeak` / `priorOffPeak` 的成例）；否则历史会话
   重放时会按新价计算，静默低估
 
-## 五、验证清单（node test/verify.mjs，123 项；另有 test/ui-smoke.mjs 布局冒烟 14 项）
+## 五、验证清单（node test/verify.mjs，124 项；另有 test/ui-smoke.mjs 布局冒烟 14 项）
 
 - 峰谷窗口边界（01:00 / 04:00 / 06:00 / 10:00 整点归属）、周末规则与法定节假日规则
 - 下一切换点计算（跨午夜窗口、周末 → 下周一、节假日 → 下一个工作日，含 7 天连休）

@@ -129,7 +129,7 @@ Prices are chosen by **the moment a call happened**, so old sessions are never r
 
 Cost = input-miss × cacheMiss + output × output + (cache read + cache write) × cacheHit; output already includes reasoning tokens. The ledger is kept in USD.
 
-CNY figures are taken verbatim from the official **Chinese** pricing page rather than converted: the two models' implied exchange rates differ (flash ≈ 6.67, pro ≈ 6.82), so a single rate would put pro's yuan figure about 2% below the official one.
+CNY figures are taken verbatim from the official **Chinese** pricing page rather than converted: the two models' implied exchange rates differ (flash ≈ 6.67, pro ≈ 6.82), so a single rate would put pro's yuan figure about 2% below the official one. **Session totals use each model's own official rate** — converted per model when the per-model ledger is available, and falling back to the single rate otherwise — so a session that mixes flash and pro is not skewed either.
 
 ### Weekends and public holidays
 
@@ -193,7 +193,7 @@ dsh-tidewatch
 # build (syntax check + zod dependency junction)
 DSH_CHECKOUT=<harness source root> bash scripts/build.sh
 
-# full self-check (123 checks): peak math, dual-constant parity, billing regression, dual-path usage reading, widget clamping, random variants, ownership regression, distinct peak/off-peak sprites, per-session official sampling, layout switching
+# full self-check (124 checks): peak math, dual-constant parity, billing regression, dual-path usage reading, widget clamping, random variants, ownership regression, distinct peak/off-peak sprites, per-session official sampling, layout switching
 node test/verify.mjs
 
 # layout smoke: renders the widget, bubble and panel in headless Chrome with the real
