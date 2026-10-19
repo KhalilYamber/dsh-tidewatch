@@ -544,6 +544,35 @@ ok('客户端上报的版本号与 package.json 一致', () => {
   })
 }
 
+// ── 新会话：不能继承上一场的额度 ──
+{
+  ok('新会话不继承上一场的额度', () => {
+    const { TideCard, Probe } = loadClientPlugin()
+    const big = {
+      provider: 'deepseek', model: 'deepseek-v4-flash', cost: 0.432,
+      input: 1000000, output: 500000, cacheRead: 0, cacheWrite: 0, reasoning: 0,
+      byModel: {}, usageMissed: false, diag: { message: 5, attempt: 0, usageFound: 5 }, official: null,
+    }
+    const empty = {
+      provider: 'deepseek', model: 'default', cost: 0,
+      input: 0, output: 0, cacheRead: 0, cacheWrite: 0, reasoning: 0,
+      byModel: {}, usageMissed: false, diag: { message: 0, attempt: 0, usageFound: 0 }, official: null,
+    }
+    const sessions = { phase: 'ready', byId: { 'sess-old': { blank: false }, 'sess-new': { blank: false } } }
+    const propsFor = usage => ({
+      useProjection: key => (key === 'costUsage' ? usage : undefined),
+      useSessions: sel => sel(sessions),
+      account: undefined,
+    })
+    // 旧会话有大额
+    Probe({ sessionId: 'sess-old', useProjection: propsFor(big).useProjection })
+    assert.equal(costTextOf(TideCard(propsFor(big))), '¥2.88', '旧会话应显示 ¥2.88')
+    // 新会话挂载：空投影，界面必须清零
+    Probe({ sessionId: 'sess-new', useProjection: propsFor(empty).useProjection })
+    assert.equal(costTextOf(TideCard(propsFor(empty))), '¥0.00', '新会话不得继承上一场额度')
+  })
+}
+
 // ── 桥订阅：v1.9.1 曾误删这行，导致挂件永远停在初始的空值上（金额一直为零）──
 {
   ok('挂件必须订阅桥：桥写入后重渲染出新值', () => {
