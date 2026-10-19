@@ -2,6 +2,12 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
 
+## [1.21.0] - 2026-10-18
+
+### 新增
+
+- **宿主持久化诊断**：投影注册后会往 `~/.dsh/tidewatch-diag.json` 写一份结构化状态（是否注册成功、schema 校验结果、字段名、stateVersion、收到的事件数与最近一次采样的官方 token）。排障时直接读文件，不必让用户在界面上转述。只记计数与状态，不含任何会话内容
+
 ## [1.20.1] - 2026-10-18
 
 ### 修复
