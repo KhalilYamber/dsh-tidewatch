@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
-  isPeakHour, peakPhaseAt, costOf, priceEntryFor, isPricedModel, isAllDayOffPeak,
+  isPeakHour, peakPhaseAt, costOf, priceEntryFor, isPricedModel, isAllDayOffPeak, holidayTableExpired as hostHolidayTableExpired,
   DEFAULT_PEAK_WINDOWS, DEFAULT_PRICE_TABLE, LEGACY_BASE_BOUNDARY, FLASH_REPRICE_BOUNDARY,
   V4_PRO_RETIRE_BOUNDARY, MODEL_ALIASES, CN_PUBLIC_HOLIDAYS, BEIJING_OFFSET_MS,
 } from '../lib/pricing.js'
@@ -454,6 +454,14 @@ ok('客户端上报的版本号与 package.json 一致', () => {
   assert.equal(m[1], pkg.version, `clientVersion=${m[1]}，package.json=${pkg.version}`)
 })
 
+ok('后台不再写死版本号（诊断文件读 package.json）', () => {
+  // 诊断文件曾把 version 写死成 '1.21.0'：排障时文件是新的、版本号却停在旧版。
+  // 后台能直接读 package.json，所以这里禁止再出现版本字面量。
+  const src = readFileSync(join(libDir, 'index.js'), 'utf8')
+  const literal = /version:\s*'[0-9]+\.[0-9]+\.[0-9]+'/.exec(src)
+  assert.equal(literal, null, `lib/index.js 仍有写死的版本号：${literal === null ? '' : literal[0]}`)
+})
+
 // ── 用量读取：账号内置通道（provider deepseek-account）下 data.usage 可能为空，需回退到流记录 ──
 {
   const usageOfEvent = __testables.usageOfEvent
@@ -625,42 +633,61 @@ ok('客户端上报的版本号与 package.json 一致', () => {
   })
 }
 
-// ── 余额差值估算：账号内置通道不提供 usage 时的兜底（只在余额下降时累加）──
+// ── 余额差值估算：某条通道拿不到 usage 时的兜底（只在余额下降时累加）──
 {
   const { testables } = loadClientPlugin()
   const makeTracker = testables.makeBalanceTracker
+  const wallets = cny => new Map([['CNY', cny]])
 
   ok('余额估算：只在余额下降时累加消耗', () => {
     const tracker = makeTracker()
-    tracker.observe(50)
-    tracker.observe(47.5)
+    tracker.observe(wallets(50))
+    tracker.observe(wallets(47.5))
     assert.equal(tracker.value, 2.5, '50 → 47.5 应记 2.5 元')
   })
 
   ok('余额估算：充值上涨不抵消已有消耗', () => {
     const tracker = makeTracker()
-    tracker.observe(50)
-    tracker.observe(45)
-    tracker.observe(100)   // 充值
+    tracker.observe(wallets(50))
+    tracker.observe(wallets(45))
+    tracker.observe(wallets(100))   // 充值
     assert.equal(tracker.value, 5, '充值只更新基准，不应把消耗冲成负数')
-    tracker.observe(98)
+    tracker.observe(wallets(98))
     assert.equal(tracker.value, 7, '充值后再消耗 2 元，总计 7 元')
   })
 
   ok('余额估算：首次读数只建立基准', () => {
     const tracker = makeTracker()
     assert.equal(tracker.primed, false, '未读数为未就绪')
-    tracker.observe(30)
+    tracker.observe(wallets(30))
     assert.equal(tracker.value, 0, '首次读数不该凭空产生消耗')
     assert.equal(tracker.primed, true, '读过后就绪')
   })
 
   ok('余额估算：非法读数被忽略', () => {
     const tracker = makeTracker()
-    tracker.observe(20)
+    tracker.observe(wallets(20))
     tracker.observe(undefined)
     tracker.observe('abc')
+    tracker.observe(new Map())
     assert.equal(tracker.value, 0, '非法值不应改变结果')
+  })
+
+  // 这一条是 bug 的回归：调用方传的是钱包表（Map），早期实现按数字读，
+  // Number(Map) 得 NaN，于是永远不建立基准、永远显示 0。
+  ok('余额估算：钱包表按币种取人民币，美元钱包不计入', () => {
+    const tracker = makeTracker()
+    tracker.observe(wallets(50))
+    tracker.observe(new Map([['CNY', 48], ['USD', 3]]))
+    assert.equal(tracker.value, 2, '应按 CNY 算 2 元，美元钱包不参与')
+    assert.equal(tracker.primed, true, '基准应已建立')
+  })
+
+  ok('余额估算：人民币估值在显示前折成美元（不能乘两次 6.67）', () => {
+    const src = readFileSync(join(libDir, 'client.js'), 'utf8')
+    assert.match(src, /balanceTracker\.current\.value \/ FIXED_FX/,
+      '追踪器记的是人民币，显示层按美元再乘汇率；不折回美元会放大 6.67 倍')
+    assert.match(src, /observe\(wallet\.total\)/, '应把整张钱包表交给追踪器')
   })
 }
 
@@ -718,6 +745,88 @@ ok('客户端上报的版本号与 package.json 一致', () => {
   })
 }
 
+// ── 官方采样按会话生效（空会话曾因此继承上一场的费用）────────────────────
+{
+  const sample = { uncachedInputTokens: 1, outputTokens: 2, cacheReadTokens: 3, cacheWriteTokens: 0 }
+
+  ok('官方采样：没有结算事件的会话不继承别的会话的采样', () => {
+    __testables.setOfficialSample(sample)
+    const definition = makeCostUsageProjection()
+    assert.equal(definition.wire.view(definition.init()).official, null,
+      '空会话不该带着上一场的采样——前端会据此算出一笔并不存在的费用')
+  })
+
+  ok('官方采样：本会话有结算事件后才带上采样', () => {
+    const definition = makeCostUsageProjection()
+    const state = definition.apply(definition.init(), {
+      type: 'assistant/message', data: { turn: 1, step: 1 }, time: Date.parse('2026-08-20T05:00:00Z'),
+    })
+    assert.equal(definition.wire.view(state).official.cacheReadTokens, 3)
+    __testables.setOfficialSample(null)
+  })
+
+  ok('缺失标记：非结算事件不算「缺用量」', () => {
+    const definition = makeCostUsageProjection()
+    const state = definition.apply(definition.init(), { type: 'turn/start', data: { turn: 1 } })
+    assert.equal(state.usageMissed, false, 'turn/start 不带用量是正常的')
+    assert.equal(definition.wire.view(state).usageMissed, false, '空会话不该显示「未提供」')
+  })
+
+  ok('缺失标记：结算事件没有用量才算缺', () => {
+    const definition = makeCostUsageProjection()
+    const state = definition.apply(definition.init(), { type: 'assistant/message', data: { turn: 1, step: 1 } })
+    assert.equal(state.usageMissed, true)
+  })
+}
+
+// ── 防御：宿主升级把用量字段改名时，不能静默算成 ¥0.00 ────────────────────
+{
+  ok('用量字段对不上时显示「未提供」，不静默记成零', () => {
+    const definition = makeCostUsageProjection()
+    const state = definition.apply(definition.init(), {
+      type: 'assistant/message',
+      time: Date.parse('2026-08-20T05:00:00Z'),
+      // 有总量、没有任何分桶：典型的事件格式漂移
+      data: { turn: 1, step: 1, usage: { totalTokens: 500 } },
+    })
+    assert.equal(state.totals.input, 0, '分桶取不到就只能是 0')
+    assert.equal(state.usageMissed, true, '但必须标记成「缺用量」')
+    assert.equal(definition.wire.view(state).usageMissed, true, '界面应显示「未提供」而不是 ¥0.00')
+  })
+
+  ok('节假日表过期判定：客户端与宿主同口径，2027 年起算过期', () => {
+    const { testables } = loadClientPlugin()
+    for (const iso of ['2026-06-01T00:00:00Z', '2026-12-31T12:00:00Z', '2027-01-01T00:00:00Z', '2028-03-01T00:00:00Z']) {
+      const at = Date.parse(iso)
+      assert.equal(testables.holidayTableExpired(at), hostHolidayTableExpired(at), `两端判定不一致：${iso}`)
+    }
+    assert.equal(hostHolidayTableExpired(Date.parse('2026-12-31T12:00:00Z')), false, '2026 年内不该报过期')
+    assert.equal(hostHolidayTableExpired(Date.parse('2027-01-01T00:00:00Z')), true, '2027 年起应报过期')
+  })
+}
+
+// ── 混合会话：换成非 DeepSeek 模型后，已计价的那部分不能被藏起来 ──────────
+{
+  ok('混合会话：当前模型不适用时仍显示已计价金额', () => {
+    const { TideCard, Probe } = loadClientPlugin()
+    const view = {
+      provider: 'anthropic', model: 'claude-sonnet-4',
+      input: 1000, output: 500, cacheRead: 0, cacheWrite: 0, reasoning: 0,
+      cost: 0.432,
+      byModel: { 'deepseek-flash': { input: 1000, output: 500, cacheRead: 0, cacheWrite: 0, reasoning: 0, cost: 0.432 } },
+      usageMissed: false, diag: { message: 2, attempt: 0, usageFound: 2 }, official: null,
+    }
+    const useProjection = key => (key === 'costUsage' ? view : undefined)
+    Probe({ sessionId: 'sess-mixed', useProjection })
+    const tree = TideCard({
+      useProjection,
+      useSessions: sel => sel({ phase: 'ready', byId: { 'sess-mixed': { blank: false } } }),
+      account: undefined,
+    })
+    assert.equal(costTextOf(tree), '¥2.88', '最后一个模型不适用，但前面 flash 花的 ¥2.88 仍是真金白银')
+  })
+}
+
 // ── 挂件钳位与气泡模板（纯函数；全屏 ↔ 小窗后挂件跑出视口是本项的存在理由）──
 {
   const { testables } = loadClientPlugin()
@@ -768,6 +877,34 @@ ok('客户端上报的版本号与 package.json 一致', () => {
 
   ok('模板：占位符替换为实时值，未知占位符原样保留', () => {
     assert.equal(fill('余额 {balance} · 未定义 {nope}', { balance: '¥16.71' }), '余额 ¥16.71 · 未定义 {nope}')
+  })
+}
+
+// ── 峰谷立绘：两张必须是不同的图（v1.22.0 把峰/谷两张换成了同一张）──────
+{
+  /** 从 client.js 里取某个立绘槽位的内嵌 data URL。 */
+  const spriteData = key => {
+    const src = readFileSync(join(libDir, 'client.js'), 'utf8')
+    const hit = new RegExp(`\\b${key}: '(data:image/png;base64,[A-Za-z0-9+/=]+)'`).exec(src)
+    assert.ok(hit !== null, `client.js 里找不到立绘 ${key}`)
+    return hit[1]
+  }
+  /** 读 PNG 的 IHDR：宽高写在固定偏移上，不必解码像素。 */
+  const pngSize = dataUrl => {
+    const bytes = Buffer.from(dataUrl.slice(dataUrl.indexOf(',') + 1), 'base64')
+    assert.equal(bytes.subarray(1, 4).toString('latin1'), 'PNG', '立绘必须是 PNG')
+    return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) }
+  }
+
+  ok('峰期与谷期是两张不同的立绘', () => {
+    assert.notEqual(
+      spriteData('think'), spriteData('idle'),
+      '峰/谷立绘是同一张图：代码换了槽位，界面却永远看不出档位切换',
+    )
+  })
+
+  ok('两张立绘画布同尺寸（切换档位时挂件不跳大小）', () => {
+    assert.deepEqual(pngSize(spriteData('idle')), pngSize(spriteData('think')))
   })
 }
 
