@@ -11,3 +11,11 @@ Thumbs.db
 
 # logs
 *.log
+
+# 本地工作循环骨架：AGENTS.md / init.sh / feature_list.json / claude-progress.md 只服务本机会话接续，
+# 刻意不进公开仓库；src/ 为本地工程面（核验脚本、探针、留档）。
+AGENTS.md
+init.sh
+feature_list.json
+claude-progress.md
+src/
