@@ -46,10 +46,13 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
 
 ### 3. 完整：按 DSH 原样
 - host：`ctx.inject(['sessionProjections'])` 注册 `costUsage` 投影（lib/index.js）
-- client：**两个插槽、各司其职**
+- client：**三个注册点，各司其职**
   - `conversation.composer.dock`（session 作用域）：挂一个渲染 `null` 的数据探针 `Probe`，只负责把
     `useProjection('costUsage')` 的值写进模块级 bridge。之所以需要它，是因为根级插槽拿不到投影席位。
-  - `shell.overlay`（根作用域）：挂 `TideCard`，从 bridge 读值渲染右下角挂件。
+  - `conversation.composer.dock`（order 100）：再挂一份 `TideCard`（`variant: 'capsule'`），渲染行内胶囊徽章。
+  - `shell.overlay`（根作用域）：挂 `TideCard`（`variant: 'mascot'`），从 bridge 读值渲染右下角立绘。
+  - 两种形态**同时挂载、只渲染被选中的那个**：没被选中的整棵子树返回 `null`，也不跑余额轮询与计时器；
+    形态偏好存 localStorage（`dsh-tidewatch.form`），面板里的「形态」一行即时切换，不需要刷新。
     - **形态**：立绘 + 秒级倒计时；可拖拽，松手吸附较近的左右边缘，位置存 localStorage，吸附左侧时内容镜像。
     - **浮层**：泡泡与完整面板都挂在挂件内部做绝对定位（`bottom: calc(100% + 10px)`），不 portal、不测量。
       portal 加位置测量的写法在测量时机不对时会把浮层渲染到屏幕外，这是踩过的坑。
@@ -115,7 +118,7 @@ const usd = costOf({ input, output, cacheRead, cacheWrite, reasoning }, entry, e
   并为被替换的旧价**补一段历史档**（`priorPeak` / `priorOffPeak` 的成例）；否则历史会话
   重放时会按新价计算，静默低估
 
-## 五、验证清单（node test/verify.mjs，122 项；另有 test/ui-smoke.mjs 布局冒烟 14 项）
+## 五、验证清单（node test/verify.mjs，123 项；另有 test/ui-smoke.mjs 布局冒烟 14 项）
 
 - 峰谷窗口边界（01:00 / 04:00 / 06:00 / 10:00 整点归属）、周末规则与法定节假日规则
 - 下一切换点计算（跨午夜窗口、周末 → 下周一、节假日 → 下一个工作日，含 7 天连休）

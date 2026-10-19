@@ -49,7 +49,7 @@ Open the panel (click the mascot, then `详情 ›`; the capsule opens it direct
 
 ## Install
 
-> For a quick install see "[Two layouts](#two-layouts-pick-either)" above. This section covers requirements and every installation route.
+> For a quick install see "[Two layouts](#two-layouts-switch-anytime)" above. This section covers requirements and every installation route.
 
 ### Requirements
 
@@ -77,7 +77,7 @@ dsh plugin --profile web add ./dsh-tidewatch-1.27.0.tgz
 dsh plugin --profile web add link:/path/to/dsh-tidewatch
 ```
 
-**Restart DSH afterwards** (the desktop app needs a full quit and relaunch; hot reload cannot refresh the client bundle). The mascot appears in the bottom-right corner.
+**Restart DSH afterwards** (the desktop app needs a full quit and relaunch; hot reload cannot refresh the client bundle). The selected layout then appears: the mascot in the bottom-right corner, or the capsule in the composer stats row.
 
 ### Upgrade and removal
 
@@ -95,7 +95,7 @@ dsh plugin --profile web remove dsh-tidewatch    # uninstall
 
 - **Click the mascot** → closes the panel when it is open, otherwise shows the bubble (clicking again never hides it, it only resets the timer); **clicking the bubble** turns to the next page; it fades out after about five seconds, and **a click outside the widget** dismisses it too
 - **Click `详情 ›` inside the bubble** → the full panel
-- **Click `详情 ›` in the bubble** → the full panel: official peak window table (Beijing time), current tier prices, token breakdown, account balance, currency switch, bubble sweep toggles, sound switch
+- **Click `详情 ›` in the bubble** → the full panel: official peak window table (Beijing time), current tier prices, token breakdown, account balance, layout and currency switches, bubble editor, sound switch
 - **Drag the mascot** → move it anywhere; releasing near either edge snaps it there, and the position persists in `localStorage`
 - **Click the session cost row** → per-model cost breakdown (tokens and cost per model; the total equals their sum)
 - **Close the panel** → the `✕` at its top right, the mascot itself, or anywhere outside
@@ -193,7 +193,7 @@ dsh-tidewatch
 # build (syntax check + zod dependency junction)
 DSH_CHECKOUT=<harness source root> bash scripts/build.sh
 
-# full self-check (122 checks): peak math, dual-constant parity, billing regression, dual-path usage reading, widget clamping, random variants, ownership regression, distinct peak/off-peak sprites, per-session official sampling, layout switching
+# full self-check (123 checks): peak math, dual-constant parity, billing regression, dual-path usage reading, widget clamping, random variants, ownership regression, distinct peak/off-peak sprites, per-session official sampling, layout switching
 node test/verify.mjs
 
 # layout smoke: renders the widget, bubble and panel in headless Chrome with the real
