@@ -513,6 +513,29 @@ ok('客户端上报的版本号与 package.json 一致', () => {
   })
 }
 
+// ── 桥订阅：v1.9.1 曾误删这行，导致挂件永远停在初始的空值上（金额一直为零）──
+{
+  ok('挂件必须订阅桥：桥写入后重渲染出新值', () => {
+    const { TideCard, Probe } = loadClientPlugin()
+    const usage = {
+      provider: 'deepseek', model: 'deepseek-v4-flash', cost: 0.432,
+      input: 1, output: 1, cacheRead: 0, cacheWrite: 0, reasoning: 0,
+      byModel: {}, usageMissed: false, diag: { message: 1, attempt: 0, usageFound: 1 }, official: null,
+    }
+    const props = {
+      useProjection: key => (key === 'costUsage' ? usage : undefined),
+      useSessions: sel => sel({ phase: 'ready', byId: { 'sess-1': { blank: false } } }),
+      account: undefined,
+    }
+    // 先渲染挂件（此时桥为空），再让探针写桥，最后重渲染应拿到新值
+    const before = costTextOf(TideCard(props))
+    Probe({ sessionId: 'sess-1', useProjection: props.useProjection })
+    const after = costTextOf(TideCard(props))
+    assert.notEqual(after, before, '桥写入后金额应变化（' + before + ' → ' + after + '）')
+    assert.equal(after, '¥2.88', '0.432 USD 应显示 ¥2.88')
+  })
+}
+
 // ── 余额差值估算：账号内置通道不提供 usage 时的兜底（只在余额下降时累加）──
 {
   const { testables } = loadClientPlugin()
