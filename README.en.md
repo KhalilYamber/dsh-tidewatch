@@ -53,13 +53,13 @@ That build also supports the balance-drop estimate on the account provider; it h
 | **Widget** | Mascot pinned to the bottom-right corner, draggable, snaps to the nearer edge on release, position persisted; a different pose for peak and off-peak |
 | **Session isolation** | Each session keeps its own tally: a new session starts at zero, switching back restores that session's own figures, and concurrent sessions never bleed into each other |
 | **Bubble** | Clicking the mascot pops a comic-style speech bubble (large radius, tail pointing at the head); **a click on the bubble turns the page**. It goes away in exactly two ways: it fades out after about five seconds, or a click anywhere outside the widget dismisses it |
-| **Interaction** | Clicking the mascot opens the bubble; clicking the bubble turns the page; the full panel opens from `详情 ›` inside the bubble |
+| **Interaction** | Clicking the mascot opens the bubble; clicking the bubble turns the page; the full panel opens from `详情 ›` inside the bubble, and closes with its `✕`, another click on the mascot, or a click outside |
 | **Editor** | The panel carries a bubble editor: add or remove pages and lines, edit templates, **reorder by dragging** (or use the arrows), a **module library** (`☆` saves a line, one click inserts it), restore the defaults |
 | **Bubble tricks** | `A \|\| B` in a line picks one at random; a line starting with `img:https://…` renders as an image |
 | **Look** | Follows the GUI light/dark theme (`--dsw-*` tokens); reuses the official DSH UI primitives; synthesized audio cues with no audio assets |
-| **Account provider** | DeepSeek account sign-in reports no usage, so the session cost is estimated from the balance drop and marked "estimate"; every other provider keeps exact token-based pricing |
+| **Account provider** | On this machine the account provider does carry usage, so its cost is priced from tokens; only when that channel really reports none does the plugin fall back to a balance-drop estimate marked "estimate" |
 | **Diagnostics** | When usage is genuinely missing (no settlement events at all, or none carrying usage) the bubble shows one line of troubleshooting info; normal sessions stay clean |
-| **Graceful scope** | With a non-DeepSeek provider it reads "not applicable" rather than pretending a Flash price |
+| **Graceful scope** | With a non-DeepSeek provider it reads "not applicable" rather than pretending a Flash price; calls already priced earlier in the same session still count toward the total |
 
 ## Install
 
@@ -107,7 +107,7 @@ dsh plugin --profile web remove dsh-tidewatch    # uninstall
 
 ## Usage
 
-- **Click the mascot** → the bubble appears (clicking again never hides it, it only resets the timer); **clicking the bubble** turns to the next page; it fades out after about five seconds, and **a click outside the widget** dismisses it too
+- **Click the mascot** → closes the panel when it is open, otherwise shows the bubble (clicking again never hides it, it only resets the timer); **clicking the bubble** turns to the next page; it fades out after about five seconds, and **a click outside the widget** dismisses it too
 - **Click `详情 ›` inside the bubble** → the full panel
 - **Click `详情 ›` in the bubble** → the full panel: official peak window table (Beijing time), current tier prices, token breakdown, account balance, currency switch, bubble sweep toggles, sound switch
 - **Drag the mascot** → move it anywhere; releasing near either edge snaps it there, and the position persists in `localStorage`
@@ -220,12 +220,12 @@ Under Git Bash, `DSH_CHECKOUT` must use a **Windows-style** path (e.g. `D:/DeepS
 ## Known limitations
 
 - **Price table is built in**; after an official price change, update both `lib/pricing.js` (billing) and `DISPLAY_PRICES` in `lib/client.js` (display), and add a historical era for the old prices
-- **Holiday table covers 2026 only**; the 2027 arrangement needs to be added to `CN_PUBLIC_HOLIDAYS` (both files) once published
+- **Holiday table covers 2026 only**; the 2027 arrangement needs to be added to `CN_PUBLIC_HOLIDAYS` (both files) once published. Past that point weekdays are billed as workdays, so the panel warns that the table has expired
 - **The V4 Pro repricing boundary** is a sentinel for now: the official statement says billing is unchanged; if that changes, fill the date back into `V4_PRO_RETIRE_BOUNDARY`
 - **Failed or retried calls are not billed**, matching the official token-meter definition; that is the ceiling of the definition, not an omission
-- **The account provider's cost comes from the balance drop**: that provider reports no usage to the session events, so both token paths come up empty. The plugin then estimates this session's cost from how much the account balance dropped and marks the amount "estimate". The balance is account-wide, so concurrent sessions or devices draw it down together and the estimate runs high; only drops are accumulated, and a top-up never cancels spend already observed. The estimate applies only to the account provider when no token data exists
-- **Two trade-offs in sampling the official projection**: the host reads DSH's `tokenUsage` projection through `sessionProjections.snapshot(session, ['tokenUsage'])` (the source of the "351M tok · 97% cache hit" line) and ships it with the view. That projection exposes a running total only, so this path bills at the *current* tier rather than each call's historical tier, and only the latest sample is kept, so with several concurrent sessions the foreground one wins
-- **Missing usage is labelled, never zeroed**: a provider may omit usage from its settlement events; the UI then shows "not reported" rather than `¥0.00`, so a missing number is not mistaken for a free one. Usage is read the same way DSH's own `token-meter` does it: both `assistant/message` and `assistant/attempt`, replaced by `(turn, step)`, with the slot cleared on a retry
+- **Two pricing paths on the account provider**: on this machine the provider (`deepseek-account`) does report usage, so calls are priced from tokens. When a call really carries none, the plugin falls back to estimating from the account balance drop and marks the amount "estimate". The balance is account-wide, so concurrent sessions or devices draw it down together and the estimate runs high; only drops are accumulated, and a top-up never cancels spend already observed
+- **Two trade-offs in sampling the official projection**: the host reads DSH's `tokenUsage` projection through `sessionProjections.snapshot(session, ['tokenUsage'])` (the source of the "351M tok · 97% cache hit" line) and ships it with the view. That projection exposes a running total only, so this path bills at the *current* tier rather than each call's historical tier, and only the latest sample is kept, so with several concurrent sessions the foreground one wins. The sample ships with the view only once the session itself has seen a settlement event, so an empty session never inherits the previous one's figures
+- **Missing usage is labelled, never zeroed**: a provider may omit usage from its settlement events; the UI then shows "not reported" rather than `¥0.00`, so a missing number is not mistaken for a free one. Usage is read the same way DSH's own `token-meter` does it: both `assistant/message` and `assistant/attempt`, replaced by `(turn, step)`, with the slot cleared on a retry. If a settlement event carries `totalTokens` but none of the buckets (a renamed field), the UI also says "not reported" instead of quietly recording zero
 - **No balance alert**: an earlier build beeped once when the balance dropped below a hard-coded threshold. The threshold was not configurable, the feature was half-finished, and the DeepSeek console may already notify on low balance, so it was removed rather than duplicated
 
 ## Acknowledgements
