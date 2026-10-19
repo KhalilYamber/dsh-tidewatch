@@ -27,7 +27,7 @@ What it sells is a checkable definition: the peak windows, weekends, public holi
 | **Bubble tricks** | `A \|\| B` in a line picks one at random; a line starting with `img:https://…` renders as an image |
 | **Look** | Follows the GUI light/dark theme (`--dsw-*` tokens); reuses the official DSH UI primitives; synthesized audio cues with no audio assets |
 | **Account provider** | DeepSeek account sign-in reports no usage, so the session cost is estimated from the balance drop and marked "estimate"; every other provider keeps exact token-based pricing |
-| **Diagnostics** | The second bubble page carries one line of usage diagnostics (settlement events seen, how many carried usage, whether the official projection is reachable) |
+| **Diagnostics** | When usage is genuinely missing (no settlement events at all, or none carrying usage) the bubble shows one line of troubleshooting info; normal sessions stay clean |
 | **Graceful scope** | With a non-DeepSeek provider it reads "not applicable" rather than pretending a Flash price |
 
 ## Install
