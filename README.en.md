@@ -68,7 +68,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 Download the latest `dsh-tidewatch-<version>.tgz` from [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases), then:
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.28.0.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.28.1.tgz
 ```
 
 ### From a local checkout (live edits)
@@ -193,7 +193,7 @@ dsh-tidewatch
 # build (syntax check + zod dependency junction)
 DSH_CHECKOUT=<harness source root> bash scripts/build.sh
 
-# full self-check (126 checks): peak math, dual-constant parity, billing regression, dual-path usage reading, widget clamping, random variants, ownership regression, distinct peak/off-peak sprites, per-session official sampling, layout switching
+# full self-check (128 checks): peak math, dual-constant parity, billing regression, dual-path usage reading, widget clamping, random variants, ownership regression, distinct peak/off-peak sprites, per-session official sampling, layout switching, empty-session bridge clearing
 node test/verify.mjs
 
 # layout smoke: renders the widget, bubble and panel in headless Chrome with the real
@@ -225,7 +225,7 @@ This plugin stands on other people's work:
 
 ## Version notes
 
-See [CHANGELOG.md](CHANGELOG.md). Current version **1.28.0**.
+See [CHANGELOG.md](CHANGELOG.md). Current version **1.28.1**.
 
 ## License
 

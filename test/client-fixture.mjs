@@ -27,6 +27,8 @@ const libDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'lib')
 // ── 假 React（含最小钩子实现与重入保护）──────────────────────────────────
 let hooks = []
 const pendingCleanups = []
+/** 当前正在渲染的组件（用于把 effect 清理函数归属到「哪个组件的哪个会话」）。 */
+let currentOwner = null
 function mkHook(init) {
   const record = { value: typeof init === 'function' ? init() : init, cleanup: null, depsKey: undefined }
   hooks.push(record)
@@ -47,9 +49,11 @@ function render(Component, props) {
   const savedHooks = hooks
   const savedTarget = rerenderTarget
   const savedProps = rerenderProps
+  const savedOwner = currentOwner
   hooks = []
   rerenderTarget = Component
   rerenderProps = props
+  currentOwner = { Component, props }
   rendering = true
   try {
     return Component(props)
@@ -58,8 +62,24 @@ function render(Component, props) {
     hooks = savedHooks
     rerenderTarget = savedTarget
     rerenderProps = savedProps
+    currentOwner = savedOwner
     if (rerenderQueued) { rerenderQueued = false; rerender() }
   }
+}
+
+function useFakeEffect(fn, deps) {
+  const record = mkHook(undefined)
+  // 记录归属：runPendingCleanups 要能只跑「某个组件的某个会话」的清理，
+  // 否则「旧会话卸载」这一步会连带跑掉新会话仍在册的清理函数。
+  record.owner = currentOwner
+  const key = JSON.stringify(deps ?? null)
+  const firstRun = record.depsKey === undefined
+  if (!firstRun && record.depsKey === key) return
+  record.depsKey = key
+  if (typeof record.cleanup === 'function') record.cleanup()
+  const cleanup = fn()
+  record.cleanup = typeof cleanup === 'function' ? cleanup : null
+  if (firstRun) pendingCleanups.push(record)
 }
 
 const FakeReact = {
@@ -73,17 +93,10 @@ const FakeReact = {
       rerender()
     }]
   },
-  useEffect: (fn, deps) => {
-    const record = mkHook(undefined)
-    const key = JSON.stringify(deps ?? null)
-    const firstRun = record.depsKey === undefined
-    if (!firstRun && record.depsKey === key) return
-    record.depsKey = key
-    if (typeof record.cleanup === 'function') record.cleanup()
-    const cleanup = fn()
-    record.cleanup = typeof cleanup === 'function' ? cleanup : null
-    if (firstRun) pendingCleanups.push(record)
-  },
+  useEffect: useFakeEffect,
+  // 布局期副作用的替身与 useEffect 同实现：夹具不模拟提交阶段，
+  // 两种钩子在测试里都在「渲染时」执行，足够断言写桥/清桥的结果。
+  useLayoutEffect: useFakeEffect,
   useCallback: fn => fn,
   // useMemo 只用来缓存随机并列的抽取结果；测试桩按「立即求值」处理即可。
   useMemo: fn => fn(),
@@ -199,9 +212,19 @@ export function costTextOf(node) {
   return null
 }
 
-/** 执行「旧会话卸载清理」——对应 React 卸载组件时跑它在册的 effect 清理函数。 */
-export function runPendingCleanups() {
+/**
+ * 执行「旧会话卸载清理」——对应 React 卸载组件时跑它在册的 effect 清理函数。
+ * @param filter 可选：只跑某个组件（component）某个会话（sessionId）的清理，
+ *   用来精确模拟「A 已卸载、B 还活着」的真实穿插窗口。
+ */
+export function runPendingCleanups(filter) {
   for (const record of pendingCleanups) {
+    if (filter !== undefined) {
+      const owner = record.owner
+      if (owner === null || owner === undefined) continue
+      if (owner.Component !== filter.component) continue
+      if (filter.sessionId !== undefined && owner.props?.sessionId !== filter.sessionId) continue
+    }
     if (typeof record.cleanup === 'function') { record.cleanup(); record.cleanup = null }
   }
 }
@@ -242,14 +265,15 @@ export function runOwnershipChecks() {
     assertEqual(cost(readyA), '¥2.88', 'A 的金额')
   })
 
-  // ② 切到会话 B（React 在 keyed 插槽里的真实顺序：B 先挂载、A 后卸载）
+  // ② 切到会话 B：B 的探针写入桥值（真实 React 里新树挂载后，旧树的卸载
+  //    清理可能还要晚一拍才跑，两者不是同一个 commit，下面的顺序就是那种窗口）。
   render(Probe, { sessionId: 'sess-B', useProjection: () => ({ cost: 0.100 }) })
   check('归属：会话 B 挂载后金额切到 B（¥0.67）', () => {
     assertEqual(cost(readyAB), '¥0.67', 'B 的金额')
   })
 
   // ③ 旧会话 A 的 effect 清理随后执行：不许清掉 B 刚写进去的桥值
-  runPendingCleanups()
+  runPendingCleanups({ component: Probe, sessionId: 'sess-A' })
   check('归属：旧会话卸载不抹掉新会话的桥值（仍 ¥0.67）', () => {
     assertEqual(cost(readyAB), '¥0.67', '清理后的金额')
   })

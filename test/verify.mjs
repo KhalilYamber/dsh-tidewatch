@@ -19,7 +19,7 @@ import {
   V4_PRO_RETIRE_BOUNDARY, MODEL_ALIASES, CN_PUBLIC_HOLIDAYS, BEIJING_OFFSET_MS,
 } from '../lib/pricing.js'
 import { makeCostUsageProjection } from '../lib/index.js'
-import { costTextOf, loadClientPlugin, runOwnershipChecks } from './client-fixture.mjs'
+import { costTextOf, loadClientPlugin, runOwnershipChecks, runPendingCleanups, resetPendingCleanups } from './client-fixture.mjs'
 import { __testables } from '../lib/index.js'
 
 const libDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'lib')
@@ -609,6 +609,61 @@ ok('后台不再写死版本号（诊断文件读 package.json）', () => {
     assert.equal(costTextOf(TideCard(propsFor(empty))), '¥0.00', '新会话不得继承上一场额度')
   })
 }
+
+// ── 空会话（hero 视图）没有探针：旧会话卸载必须把桥清空 ──
+// DSH 只在 InputBar 的 variant === 'composer' 时渲染 conversation.composer.dock：
+// 点「新会话」进的是空 hero 页，新探针根本不会挂载。旧探针卸载时若不清桥，
+// 上一场的金额与 token 就会一直挂在界面上（用户实测反馈）。
+{
+  ok('新会话是空 hero（探针不挂载）：旧会话卸载后金额清零', () => {
+    const { TideCard, Probe } = loadClientPlugin()
+    const big = {
+      provider: 'deepseek', model: 'deepseek-v4-flash', cost: 0.432,
+      input: 1000000, output: 500000, cacheRead: 0, cacheWrite: 0, reasoning: 0,
+      byModel: {}, usageMissed: false, diag: { message: 5, attempt: 0, usageFound: 5 }, official: null,
+    }
+    const sessions = {
+      phase: 'ready',
+      byId: { 'sess-old': { blank: false }, 'sess-new': { blank: true } },
+    }
+    const propsFor = usage => ({
+      useProjection: key => (key === 'costUsage' ? usage : undefined),
+      useSessions: sel => sel(sessions),
+      account: undefined,
+    })
+    resetPendingCleanups()
+    Probe({ sessionId: 'sess-old', useProjection: propsFor(big).useProjection })
+    assert.equal(costTextOf(TideCard(propsFor(big))), '¥2.88', '旧会话应显示 ¥2.88')
+    // 切到空 hero 新会话：只有旧探针卸载（React 跑清理），新探针不挂载。
+    runPendingCleanups()
+    assert.equal(costTextOf(TideCard(propsFor(big))), '¥0.00', '桥应被清空，界面不得残留上一场的额度')
+  })
+}
+
+// ── 胶囊的针对性：桥指向别的会话时，本会话的胶囊必须显示空 ──
+{
+  ok('胶囊形态只认自己会话的桥数据', () => {
+    const { TideCard, Probe, testables } = loadClientPlugin()
+    const view = {
+      provider: 'deepseek', model: 'deepseek-v4-flash', cost: 0.432,
+      input: 1000000, output: 500000, cacheRead: 0, cacheWrite: 0, reasoning: 0,
+      byModel: {}, usageMissed: false, diag: { message: 5, attempt: 0, usageFound: 5 }, official: null,
+    }
+    const useSessions = sel => sel({
+      phase: 'ready',
+      byId: { 'sess-A': { blank: false }, 'sess-B': { blank: false } },
+    })
+    const useProjection = key => (key === 'costUsage' ? view : undefined)
+    resetPendingCleanups()
+    Probe({ sessionId: 'sess-A', useProjection })
+    testables.setForm('capsule')
+    const base = { useSessions, useProjection, account: undefined, variant: 'capsule' }
+    assert.equal(costTextOf(TideCard({ ...base, sessionId: 'sess-A' })), '¥2.88', '本会话应正常显示')
+    assert.equal(costTextOf(TideCard({ ...base, sessionId: 'sess-B' })), '¥0.00', '别的会话的额度不能串过来')
+    testables.setForm('mascot')
+  })
+}
+
 
 // ── 桥订阅：v1.9.1 曾误删这行，导致挂件永远停在初始的空值上（金额一直为零）──
 {
