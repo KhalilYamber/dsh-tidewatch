@@ -890,6 +890,17 @@ ok('后台不再写死版本号（诊断文件读 package.json）', () => {
   })
 }
 
+// ── 编辑器拖拽：只有把手能起拖，整行/整页不再 draggable ───────────────────
+{
+  ok('编辑器：拖拽起点只有两个把手', () => {
+    const src = readFileSync(join(libDir, 'client.js'), 'utf8')
+    const flags = src.match(/draggable: true/g) ?? []
+    assert.equal(flags.length, 2, '应该只有页头把手与行把手两处 draggable')
+    const onGrip = src.match(/className: 'tw-grip',[\s\S]{0,200}?draggable: true/g) ?? []
+    assert.equal(onGrip.length, 2, '两处 draggable 都必须挂在把手上，不能挂在行/页容器上')
+  })
+}
+
 // ── 挂件钳位与气泡模板（纯函数；全屏 ↔ 小窗后挂件跑出视口是本项的存在理由）──
 {
   const { testables } = loadClientPlugin()
