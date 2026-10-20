@@ -890,6 +890,17 @@ ok('后台不再写死版本号（诊断文件读 package.json）', () => {
   })
 }
 
+// ── 默认气泡排布：首次安装看到的两页（用户改过则以 storage 为准）──────────
+{
+  ok('默认气泡排布与产品约定一致', () => {
+    const { testables } = loadClientPlugin()
+    assert.deepEqual(testables.defaultBubblePages, [
+      ['本次会话 {cost}', '余额 {balance}', '{phase} · 距切换 {countdown}'],
+      ['当前档位 {price}', '充值 {paid} / 礼金 {bonus}', '会话 token {tokens}'],
+    ])
+  })
+}
+
 // ── 编辑器拖拽：只有把手能起拖，整行/整页不再 draggable ───────────────────
 {
   ok('编辑器：拖拽起点只有两个把手', () => {
