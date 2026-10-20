@@ -68,7 +68,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 Download the latest `dsh-tidewatch-<version>.tgz` from [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases), then:
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.28.2.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.28.3.tgz
 ```
 
 ### From a local checkout (live edits)
@@ -95,7 +95,7 @@ dsh plugin --profile web remove dsh-tidewatch    # uninstall
 
 - **Click the mascot** → closes the panel when it is open, otherwise shows the bubble (clicking again never hides it, it only resets the timer); **clicking the bubble** turns to the next page; it fades out after about five seconds, and **a click outside the widget** dismisses it too
 - **Click `详情 ›` inside the bubble** → the full panel
-- **Click `详情 ›` in the bubble** → the full panel: official peak window table (Beijing time), current tier prices, token breakdown, account balance, layout and currency switches, bubble editor, sound switch
+- **Click `详情 ›` in the bubble** → the full panel: account balance, this session's tokens and cost, current tier prices, official peak window table (Beijing time), layout and currency switches, bubble editor, sound switch
 - **Drag the mascot** → move it anywhere; releasing near either edge snaps it there, and the position persists in `localStorage`
 - **Click the session cost row** → per-model cost breakdown (tokens and cost per model; the total equals their sum)
 - **Close the panel** → the `✕` at its top right, the mascot itself, or anywhere outside
@@ -225,7 +225,7 @@ This plugin stands on other people's work:
 
 ## Version notes
 
-See [CHANGELOG.md](CHANGELOG.md). Current version **1.28.2**.
+See [CHANGELOG.md](CHANGELOG.md). Current version **1.28.3**.
 
 ## License
 

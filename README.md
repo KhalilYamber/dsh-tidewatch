@@ -68,7 +68,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 到 [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases) 下载最新的 `dsh-tidewatch-<版本>.tgz`，然后：
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.28.2.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.28.3.tgz
 ```
 
 ### 本地链接安装（改源码即时生效）
@@ -95,7 +95,7 @@ dsh plugin --profile web remove dsh-tidewatch    # 卸载
 
 - **点立绘** → 面板开着时先收起面板，否则弹出气泡（再点不会收起，只会重置计时）；**点气泡** → 翻到下一页；约 5 秒后自己淡出，**点插件外任意位置**也会收起
 - **气泡里的「详情 ›」** → 完整面板
-- **点气泡里的「详情 ›」** → 展开完整面板：官方峰谷时段表（北京时间）、当前档位价格、Token 明细、账户余额、形态与币种切换、气泡编辑器、音效开关
+- **点气泡里的「详情 ›」** → 展开完整面板：账户余额、本次会话 Token 与费用、当前档位价格、峰谷时段表（北京时间）、形态与币种切换、气泡编辑器、音效开关
 - **拖动挂件** → 移到任意位置；松手靠近左右边缘会自动吸附，位置记在 `localStorage`
 - **点「本次会话费用」行** → 展开分模型花费明细（各模型 token 与花费，合计等于各项之和）
 - **收起面板** → 点面板右上角 `✕`、点挂件本身、或点面板外部
@@ -225,7 +225,7 @@ node test/ui-smoke.mjs
 
 ## 版本说明
 
-历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.28.2**。
+历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.28.3**。
 
 ## 许可
 
