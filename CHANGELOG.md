@@ -2,6 +2,12 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
 
+## [1.28.8] - 2026-10-20
+
+### 修复
+
+- **详情面板里的抓手光标**：面板渲染在立绘挂件容器（`.tw-widget`，可拖拽）内部，继承到了 `cursor:grab`；但面板内的 pointerdown 本来就被拖拽逻辑放行、拖不动——于是鼠标停在详情页上是一个「没东西可抓的抓手」。现在面板显式 `cursor:default`，内部按钮/可点行各自的 `pointer` 光标不变。
+
 ## [1.28.7] - 2026-10-20
 
 ### 变更
