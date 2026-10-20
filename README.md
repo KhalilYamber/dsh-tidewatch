@@ -76,9 +76,9 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 
 ```sh
 # 中文版
-dsh plugin --profile web add ./dsh-tidewatch-1.28.6.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.28.7.tgz
 # 英文版
-dsh plugin --profile web add ./dsh-tidewatch-en-1.28.6.tgz
+dsh plugin --profile web add ./dsh-tidewatch-en-1.28.7.tgz
 ```
 
 ### 本地链接安装（改源码即时生效）
@@ -236,7 +236,7 @@ node test/ui-smoke.mjs
 
 ## 版本说明
 
-历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.28.6**。
+历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.28.7**。
 
 ## 许可
 

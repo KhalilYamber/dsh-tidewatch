@@ -76,9 +76,9 @@ Download the matching tarball from [Releases](https://github.com/KhalilYamber/ds
 
 ```sh
 # Chinese edition
-dsh plugin --profile web add ./dsh-tidewatch-1.28.6.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.28.7.tgz
 # English edition
-dsh plugin --profile web add ./dsh-tidewatch-en-1.28.6.tgz
+dsh plugin --profile web add ./dsh-tidewatch-en-1.28.7.tgz
 ```
 
 ### From a local checkout (live edits)
@@ -236,7 +236,7 @@ This plugin stands on other people's work:
 
 ## Version notes
 
-See [CHANGELOG.md](CHANGELOG.md). Current version **1.28.6**.
+See [CHANGELOG.md](CHANGELOG.md). Current version **1.28.7**.
 
 ## License
 
