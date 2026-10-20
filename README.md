@@ -65,10 +65,20 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 
 ### 从 Release 安装（可固定版本、可离线）
 
-到 [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases) 下载最新的 `dsh-tidewatch-<版本>.tgz`，然后：
+到 [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases) 下载对应版本的 tgz。**界面语言二选一**——两个包的功能与峰谷规则完全一致，只是界面文案不同：
+
+| 版本 | 文件 | 界面语言 |
+| --- | --- | --- |
+| 中文版 | `dsh-tidewatch-<版本>.tgz` | 中文 |
+| 英文版 | `dsh-tidewatch-en-<版本>.tgz` | English |
+
+> ⚠️ 两个版本**不要同时安装**：它们会在同一个位置各挂一个挂件。换语言时先卸载旧的再装新的。
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.28.4.tgz
+# 中文版
+dsh plugin --profile web add ./dsh-tidewatch-1.28.5.tgz
+# 英文版
+dsh plugin --profile web add ./dsh-tidewatch-en-1.28.5.tgz
 ```
 
 ### 本地链接安装（改源码即时生效）
@@ -180,6 +190,7 @@ dsh-tidewatch
 │   └── assets/mascot/    # 挂件立绘原图（压缩后内嵌进 bundle）
 ├── cordis.patch.yml      # 装配行
 ├── docs/PORTING.md       # 移植到其他宿主的适配说明
+├── scripts/              # 构建脚本（build.sh；英文版生成 build-en.mjs）
 └── test/
     ├── verify.mjs        # 全套自检入口
     ├── client-fixture.mjs# 前端夹具：真实加载 lib/client.js 的假 React 环境
@@ -225,7 +236,7 @@ node test/ui-smoke.mjs
 
 ## 版本说明
 
-历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.28.4**。
+历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.28.5**。
 
 ## 许可
 

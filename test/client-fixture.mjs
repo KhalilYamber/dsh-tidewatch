@@ -134,11 +134,13 @@ function installBrowserStubs() {
 
 /**
  * 按真实路径加载 lib/client.js，返回它注册的两个组件。
+ * @param relativePath - 相对 lib/ 的 bundle 路径；默认中文版，英文版传
+ *   '../en-dist/lib/client.js'（scripts/build-en.mjs 的产物）。
  * @returns {{ Probe: Function, TideCard: Function }} 插槽组件。
  */
-export function loadClientPlugin() {
+export function loadClientPlugin(relativePath = 'client.js') {
   installBrowserStubs()
-  const src = readFileSync(join(libDir, 'client.js'), 'utf8')
+  const src = readFileSync(join(libDir, relativePath), 'utf8')
   // eslint-disable-next-line no-new-func
   new Function('window', src)(globalThis.window)
   const registration = globalThis.__REGISTRATION__

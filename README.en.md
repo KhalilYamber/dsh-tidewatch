@@ -65,10 +65,20 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 
 ### From a release tarball (pinned version, offline-capable)
 
-Download the latest `dsh-tidewatch-<version>.tgz` from [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases), then:
+Download the matching tarball from [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases). **Pick one UI language** — both packages share the same features and peak/off-peak rules, only the interface copy differs:
+
+| Edition | File | UI language |
+| --- | --- | --- |
+| Chinese | `dsh-tidewatch-<version>.tgz` | 中文 |
+| English | `dsh-tidewatch-en-<version>.tgz` | English |
+
+> ⚠️ Do **not** install both: each package mounts its own widget in the same spot. Uninstall the old one before switching.
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.28.4.tgz
+# Chinese edition
+dsh plugin --profile web add ./dsh-tidewatch-1.28.5.tgz
+# English edition
+dsh plugin --profile web add ./dsh-tidewatch-en-1.28.5.tgz
 ```
 
 ### From a local checkout (live edits)
@@ -180,6 +190,7 @@ dsh-tidewatch
 │   └── assets/mascot/    # mascot originals (compressed into the bundle)
 ├── cordis.patch.yml      # assembly row
 ├── docs/PORTING.md       # porting notes for other hosts
+├── scripts/              # build scripts (build.sh; build-en.mjs for the English edition)
 └── test/
     ├── verify.mjs        # full self-check entry point
     ├── client-fixture.mjs# front-end fixture: loads the real lib/client.js in a fake React env
@@ -225,7 +236,7 @@ This plugin stands on other people's work:
 
 ## Version notes
 
-See [CHANGELOG.md](CHANGELOG.md). Current version **1.28.4**.
+See [CHANGELOG.md](CHANGELOG.md). Current version **1.28.5**.
 
 ## License
 

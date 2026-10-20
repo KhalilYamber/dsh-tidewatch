@@ -2,6 +2,16 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
 
+## [1.28.5] - 2026-10-20
+
+### 变更
+
+- **面板品牌统一为 `tidewatch`**：面板顶部那条品牌名不再写「潮汐时刻」，中英两版都显示插件名 `tidewatch`。
+- **发布英文版插件包**：新增 `scripts/build-en.mjs` + `scripts/en-dict.mjs`，从中文版 `client.js` 的字符串字面量按字典生成英文 `client.js`（面板、气泡、编辑器、诊断共 100+ 条文案），产物是独立包 `dsh-tidewatch-en`（patch 行 id `tidewatch-en`），与中文版**二选一**安装。
+  - 构建自带门禁：只要英文包里还残留含中文的字符串字面量就报错退出，不会发出中英混杂的包。
+  - 验证：英文 bundle 在夹具里渲染展开面板，41 条可见文本零中文、关键文案齐全；再用真实样式表在 360px 宽度渲染英文面板，长句子（`Peak / off-peak windows`、`Output (incl. reasoning)`）不换行、不溢出。
+- README 中英都加了「中文版 / 英文版」下载对照表与「不要同时安装」提醒。
+
 ## [1.28.4] - 2026-10-20
 
 ### 变更

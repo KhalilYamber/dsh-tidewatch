@@ -4,6 +4,7 @@ node_modules/
 # build artifacts
 *.tgz
 *.zip
+en-dist/
 
 # OS noise
 .DS_Store
