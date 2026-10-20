@@ -105,7 +105,6 @@ const FakeReact = {
 
 const moduleTable = {
   'react': FakeReact,
-  'react-dom': { createPortal: node => node },
 }
 
 /** 浏览器最小面：插件在会话确有 token 统计前找不到 [data-composer-stats]，走浮动定位兜底分支。 */

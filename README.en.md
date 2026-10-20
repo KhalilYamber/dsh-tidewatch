@@ -68,7 +68,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 Download the latest `dsh-tidewatch-<version>.tgz` from [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases), then:
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.28.1.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.28.2.tgz
 ```
 
 ### From a local checkout (live edits)
@@ -183,8 +183,8 @@ dsh-tidewatch
 └── test/
     ├── verify.mjs        # full self-check entry point
     ├── client-fixture.mjs# front-end fixture: loads the real lib/client.js in a fake React env
-    ├── adapt-repro.mjs   # host billing regression
-    └── ownership-repro.mjs # front-end ownership regression
+    ├── ui-smoke.mjs      # layout smoke: real stylesheet in headless Chrome
+    └── adapt-repro.mjs   # host billing regression
 ```
 
 ## Development
@@ -225,7 +225,7 @@ This plugin stands on other people's work:
 
 ## Version notes
 
-See [CHANGELOG.md](CHANGELOG.md). Current version **1.28.1**.
+See [CHANGELOG.md](CHANGELOG.md). Current version **1.28.2**.
 
 ## License
 

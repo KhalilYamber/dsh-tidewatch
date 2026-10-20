@@ -2,6 +2,14 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
 
+## [1.28.2] - 2026-10-20
+
+### 变更
+
+- **清理死代码**：删掉从未被调用的 `claims` 归属声明集合与 `currentSessionId()`、从未使用的 `createPortal` 探测，以及恒为 `null` 的 `rootRef` 参数（展开面板本来就渲染在 `chipWrapRef` 内部，一次包含判断即可）。行为不变，自检 128 项照常全绿。
+- **删除过期的复现脚本** `test/ownership-repro.mjs`：它自带一套假 React（缺 `useMemo` / `useLayoutEffect`），v1.24 之后就跑不动了；其断言已被 `test/verify.mjs` 的归属判据用例完整覆盖，README 目录树同步更新。
+- **删除重复立绘** `lib/assets/mascot/fish444.png`：与 `think.png` 字节完全相同、代码无引用（历史版本可从 git 取回）。
+
 ## [1.28.1] - 2026-10-20
 
 ### 修复

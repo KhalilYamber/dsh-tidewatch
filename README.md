@@ -68,7 +68,7 @@ dsh plugin --profile web add github:KhalilYamber/dsh-tidewatch
 到 [Releases](https://github.com/KhalilYamber/dsh-tidewatch/releases) 下载最新的 `dsh-tidewatch-<版本>.tgz`，然后：
 
 ```sh
-dsh plugin --profile web add ./dsh-tidewatch-1.28.1.tgz
+dsh plugin --profile web add ./dsh-tidewatch-1.28.2.tgz
 ```
 
 ### 本地链接安装（改源码即时生效）
@@ -183,8 +183,8 @@ dsh-tidewatch
 └── test/
     ├── verify.mjs        # 全套自检入口
     ├── client-fixture.mjs# 前端夹具：真实加载 lib/client.js 的假 React 环境
-    ├── adapt-repro.mjs   # 宿主计费口径回归
-    └── ownership-repro.mjs # 前端归属判据回归
+    ├── ui-smoke.mjs      # 布局冒烟：真实样式表 + 无头浏览器
+    └── adapt-repro.mjs   # 宿主计费口径回归
 ```
 
 ## 开发与验证
@@ -225,7 +225,7 @@ node test/ui-smoke.mjs
 
 ## 版本说明
 
-历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.28.1**。
+历次变更见 [CHANGELOG.md](CHANGELOG.md)，当前版本 **1.28.2**。
 
 ## 许可
 
