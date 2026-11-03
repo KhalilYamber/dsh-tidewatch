@@ -28,6 +28,10 @@ Open the panel (click the mascot, then `详情 ›`; the capsule opens it direct
 
 > Both layouts stay mounted and only the selected one renders; the other runs no balance polling or timers and leaves no gap in the UI.
 
+### Mobile and narrow screens
+
+The detail panel stays inside the viewport. On a wide desktop window it anchors above the badge; on a phone held upright (viewport ≤560px) it switches to screen-edge docking — 8px on each side, lifted above the stats row, scrolling inside the panel when the content is tall. So opening the capsule in a phone browser, or through DSH's remote mode, keeps the whole panel on screen instead of clipping its left edge.
+
 ## Features
 
 | Area | Capability |
