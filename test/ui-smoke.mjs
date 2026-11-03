@@ -55,7 +55,7 @@ const CSS = extractCss()
 const DOT = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
 
 function fixtureHtml() {
-  return `<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><style>
+  return `<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
 html,body{margin:0;height:100%;background:#0e1220;color:#e8e8e8;font:13px/1.5 system-ui,'Microsoft YaHei',sans-serif}
 ${CSS}
 </style></head><body>
@@ -80,10 +80,25 @@ ${CSS}
 </div>
 <!-- dock 行里的胶囊形态（切到胶囊时显示的就是这一枚） -->
 <div id="dockRow" style="position:fixed;left:24px;bottom:12px;display:flex;align-items:center;gap:8px">
-  <span class="tw-capsule" id="capsule">
-    <span class="tw-capsule-phase">谷</span>
-    <span class="tw-capsule-countdown">01:23:45</span>
-    <span class="tw-capsule-cost">¥0.71</span>
+  <span class="tw-capsule-wrap" id="capsuleWrap">
+    <span class="tw-capsule" id="capsule">
+      <span class="tw-capsule-phase">谷</span>
+      <span class="tw-capsule-countdown">01:23:45</span>
+      <span class="tw-capsule-cost">¥0.71</span>
+    </span>
+    <div class="tw-panel-pop" id="capsulePanel">
+      <div class="tw-panel-head">
+        <span class="tw-panel-phase offpeak">谷期进行中</span>
+        <span class="tw-panel-countdown">距峰期 07:51:30</span>
+        <button class="tw-panel-close">✕</button>
+      </div>
+      <div class="tw-h"><span>账户余额</span><span class="tw-h-extra">07:51:30</span></div>
+      <div class="tw-token-row"><span>充值余额</span><span>¥16.71</span></div>
+      <div class="tw-h"><span>本次会话 Token</span><span class="tw-h-extra">谷时</span></div>
+      <div class="tw-token-row"><span>输入（命中）</span><span>45.7K</span></div>
+      <div class="tw-token-row"><span>输入（未命中）</span><span>1.10M</span></div>
+      <div class="tw-token-row"><span>输出（含推理）</span><span>16.4K</span></div>
+    </div>
   </span>
 </div>
 </body></html>`
@@ -113,7 +128,7 @@ async function withDebugger(port, fn) {
     return res.result?.result?.value
   }
   try {
-    return await fn(evaluate)
+    return await fn(evaluate, send)
   } finally {
     ws.close()
   }
@@ -159,7 +174,7 @@ async function main() {
     }
     if (!ready) throw new Error('浏览器调试端口未就绪')
 
-    await withDebugger(port, async evaluate => {
+    await withDebugger(port, async (evaluate, send) => {
       const probe = await evaluate(`(() => {
         const rect = el => { const r = el.getBoundingClientRect(); return { l: r.left, t: r.top, w: r.width, h: r.height, b: r.bottom, r: r.right } }
         const widget = document.getElementById('widget')
@@ -243,6 +258,21 @@ async function main() {
 
       const cd = await evaluate("document.getElementById('countdown').textContent")
       check('倒计时为 时:分:秒', /^距峰期 \d{2,}:\d{2}:\d{2}$/.test(cd), cd)
+
+      // 窄屏（手机竖屏）回归：胶囊展开的详情面板必须完整落在视口内。
+      // 历史缺陷：面板 right:0 锚定胶囊、320px 向左展开，胶囊在 dock 行中间时
+      // 左缘直接越过视口，手机上详情页被切掉一截（见 CHANGELOG 1.28.9）。
+      await send('Emulation.setDeviceMetricsOverride', {
+        width: 390, height: 844, deviceScaleFactor: 2, mobile: true,
+      })
+      const narrow = JSON.parse(await evaluate(`(() => {
+        const r = document.getElementById('capsulePanel').getBoundingClientRect()
+        return JSON.stringify({ vw: innerWidth, vh: innerHeight, l: r.left, r: r.right, h: r.height })
+      })()`))
+      check('窄屏下胶囊面板不越过视口左缘', narrow.l >= 0, `panel.left=${Math.round(narrow.l)}`)
+      check('窄屏下胶囊面板不越过视口右缘', narrow.r <= narrow.vw + 1, `panel.right=${Math.round(narrow.r)} vw=${narrow.vw}`)
+      check('窄屏下胶囊面板不超出视口高度', narrow.h <= narrow.vh, `panel.h=${Math.round(narrow.h)} vh=${narrow.vh}`)
+      await send('Emulation.clearDeviceMetricsOverride')
     })
   } finally {
     proc.kill()
